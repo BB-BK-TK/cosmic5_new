@@ -170,13 +170,15 @@ export default function CosmicFivePage() {
           return { type, korean: "", hanja, animal: branchAnimalEmoji(p.zhi ?? hanja?.slice(1, 2)) };
         }) ?? [];
 
-      const dmStem = bazi?.day_master?.stem ?? "—";
-      const dmInfo = bazi?.day_master?.info;
-      const dmMeaning = dmInfo?.name
-        ? `${dmInfo.name}${dmInfo.element ? ` · ${dmInfo.element}` : ""}${dmInfo.polarity ? ` · ${dmInfo.polarity}` : ""}`
-        : "사주 분석을 활성화하면 일간 정보를 보여줘요.";
+      const hasSajuData = !!bazi?.day_master || !!bazi?.pillars?.length;
 
-      const elementPoints = bazi?.elements?.points ?? null;
+      const dmStem = hasSajuData ? bazi?.day_master?.stem ?? "—" : "—";
+      const dmInfo = bazi?.day_master?.info;
+      const dmMeaning = hasSajuData && dmInfo?.name
+        ? `${dmInfo.name}${dmInfo.element ? ` · ${dmInfo.element}` : ""}${dmInfo.polarity ? ` · ${dmInfo.polarity}` : ""}`
+        : "사주 데이터가 충분하지 않아 기본 정보만 보여드려요.";
+
+      const elementPoints = hasSajuData ? bazi?.elements?.points ?? null : null;
       const fiveScaled = elementPoints
         ? toFiveScale({
             Wood: elementPoints.Wood ?? 0,
@@ -189,12 +191,18 @@ export default function CosmicFivePage() {
 
       const strengths =
         elementPoints
-          ? [`오행 분포가 계산되었습니다.`, `강한 기운을 활용해 오늘의 흐름을 잡아보세요.`]
-          : [`사주 API 키를 설정하면 네 기둥(년/월/일/시)을 계산해 드려요.`, `현재는 점성술(오늘 운세)만 표시 중입니다.`];
+          ? [
+              "당신의 사주 속 오행 흐름이 계산되었어요.",
+              "강하게 드러나는 기운을 오늘의 선택과 행동에 활용해 보세요.",
+            ]
+          : [
+              "지금은 점성술 중심으로 오늘의 흐름을 들려드리고 있어요.",
+              "사주 분석은 안정화 과정을 거친 뒤 더 풍부하게 제공될 예정입니다.",
+            ];
       const cautions =
         elementPoints
-          ? [`과하거나 부족한 기운이 있다면 균형을 의식해 보세요.`]
-          : [`배포 환경에 \`FREEASTRO_API_KEY\`를 추가하면 사주 분석이 활성화됩니다.`];
+          ? ["과하거나 부족한 기운이 있다면, 오늘은 균형과 페이스 조절을 조금 더 의식해 보세요."]
+          : ["사주는 참고용으로만 가볍게 받아들이고, 중요한 결정은 현실적인 정보와 함께 판단해 주세요."];
 
       const keyMessage = horoscope.description.split(".")[0]?.trim() || horoscope.description;
       const fortune: FortuneData = {
