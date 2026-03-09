@@ -55,6 +55,8 @@ type AztroResponse = {
   lucky_time: string;
 };
 
+type ApiError = { error?: string; detail?: string; upstreamStatus?: number };
+
 type BaziResponse = {
   day_master?: { stem?: string; info?: { element?: string; polarity?: string; name?: string } };
   pillars?: { label?: "year" | "month" | "day" | "hour"; gan_zhi?: string; gan?: string; zhi?: string }[];
@@ -130,7 +132,13 @@ export default function CosmicFivePage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sign: zodiacSign, day: "today" }),
       });
-      if (!horoscopeResp.ok) throw new Error("Horoscope API error");
+      if (!horoscopeResp.ok) {
+        const err = (await horoscopeResp.json().catch(() => ({}))) as ApiError;
+        const detail = err.upstreamStatus
+          ? ` (upstream ${err.upstreamStatus})`
+          : "";
+        throw new Error(`${err.error ?? "Horoscope API error"}${detail}`);
+      }
       const horoscope = (await horoscopeResp.json()) as AztroResponse;
 
       const sajuResp = await fetch("/api/saju", {
@@ -237,7 +245,8 @@ export default function CosmicFivePage() {
       setFortuneData(fortune);
       setView("result");
     } catch (e) {
-      setErrorMessage(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      setErrorMessage(msg);
       setView("input");
     }
   };

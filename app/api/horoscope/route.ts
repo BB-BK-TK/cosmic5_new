@@ -39,7 +39,15 @@ export async function POST(req: Request) {
     const url = `https://aztro.sameerkumar.website/?sign=${encodeURIComponent(sign)}&day=${encodeURIComponent(day)}`;
     const resp = await fetch(url, { method: "POST", cache: "no-store" });
     if (!resp.ok) {
-      return NextResponse.json({ error: "Upstream error" }, { status: 502 });
+      const detail = (await resp.text()).slice(0, 800);
+      return NextResponse.json(
+        {
+          error: "Upstream error",
+          upstreamStatus: resp.status,
+          detail,
+        },
+        { status: 502 }
+      );
     }
 
     const data = (await resp.json()) as AztroResponse;
