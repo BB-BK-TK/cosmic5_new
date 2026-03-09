@@ -12,7 +12,8 @@ import { MicroActionCard } from "@/components/micro-action-card";
 import { ResultTabs } from "@/components/result-tabs";
 import { LoadingScreen } from "@/components/loading-screen";
 import { cn } from "@/lib/utils";
-import { westernZodiacLabelKo, westernZodiacSignForDate } from "@/lib/western-zodiac";
+import { SajuCalculator } from "@/lib/saju-db";
+import { AstrologyCalculator } from "@/lib/astrology-db";
 
 type FortuneData = {
   keyMessage: string;
@@ -44,67 +45,35 @@ type FortuneData = {
   microActions: { id: string; text: string; tag: string }[];
 };
 
-type AztroResponse = {
-  current_date: string;
-  date_range: string;
-  description: string;
-  compatibility: string;
-  mood: string;
-  color: string;
-  lucky_number: string;
-  lucky_time: string;
-};
-
-type ApiError = { error?: string; detail?: string; upstreamStatus?: number };
-
-type BaziResponse = {
-  day_master?: { stem?: string; info?: { element?: string; polarity?: string; name?: string } };
-  pillars?: { label?: "year" | "month" | "day" | "hour"; gan_zhi?: string; gan?: string; zhi?: string }[];
-  elements?: { points?: { Wood?: number; Fire?: number; Earth?: number; Metal?: number; Water?: number } };
-};
-
-function branchAnimalEmoji(zhi?: string) {
-  switch (zhi) {
-    case "子":
+function zodiacEmoji(animalKo: string) {
+  switch (animalKo) {
+    case "쥐":
       return "🐀";
-    case "丑":
+    case "소":
       return "🐂";
-    case "寅":
+    case "호랑이":
       return "🐅";
-    case "卯":
+    case "토끼":
       return "🐇";
-    case "辰":
+    case "용":
       return "🐉";
-    case "巳":
+    case "뱀":
       return "🐍";
-    case "午":
+    case "말":
       return "🐎";
-    case "未":
+    case "양":
       return "🐐";
-    case "申":
+    case "원숭이":
       return "🐒";
-    case "酉":
+    case "닭":
       return "🐓";
-    case "戌":
+    case "개":
       return "🐕";
-    case "亥":
+    case "돼지":
       return "🐖";
     default:
       return "✦";
   }
-}
-
-function toFiveScale(points: Record<string, number>) {
-  const values = Object.values(points);
-  const max = Math.max(...values, 1);
-  const scale = (v: number) => Math.max(0, Math.min(5, Math.round((v / max) * 5)));
-  return {
-    wood: scale(points.Wood ?? 0),
-    fire: scale(points.Fire ?? 0),
-    earth: scale(points.Earth ?? 0),
-    metal: scale(points.Metal ?? 0),
-    water: scale(points.Water ?? 0),
-  };
 }
 
 export default function CosmicFivePage() {
@@ -114,6 +83,8 @@ export default function CosmicFivePage() {
   const [lastBirthInfo, setLastBirthInfo] = useState<BirthInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isSubmitting = view === "loading";
+  const sajuCalculator = new SajuCalculator();
+  const astrologyCalculator = new AstrologyCalculator();
 
   const handleSubmit = async (birthInfo: BirthInfo) => {
     setLastBirthInfo(birthInfo);
@@ -121,113 +92,86 @@ export default function CosmicFivePage() {
     setErrorMessage(null);
 
     try {
-      const [, mStr, dStr] = birthInfo.birthDate.split("-");
+      const [yStr, mStr, dStr] = birthInfo.birthDate.split("-");
+      const year = Number(yStr);
       const month = Number(mStr);
       const day = Number(dStr);
-      const zodiacSign = westernZodiacSignForDate(month, day);
-      const zodiacKo = westernZodiacLabelKo(zodiacSign);
+      const birthDateObj = new Date(year, month - 1, day);
 
-      const horoscopeResp = await fetch("/api/horoscope", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sign: zodiacSign, day: "today" }),
-      });
-      if (!horoscopeResp.ok) {
-        const err = (await horoscopeResp.json().catch(() => ({}))) as ApiError;
-        const detail = err.upstreamStatus
-          ? ` (upstream ${err.upstreamStatus})`
-          : "";
-        throw new Error(`${err.error ?? "Horoscope API error"}${detail}`);
-      }
-      const horoscope = (await horoscopeResp.json()) as AztroResponse;
+      const sign = astrologyCalculator.getSign(month, day);
+      const daily = astrologyCalculator.getDaily(sign, new Date());
+      // --- Local saju calculation ---
+      const [hourStr = "12"] = (birthInfo.birthTime || "12:00").split(":");
+      const hourNum = Number(hourStr);
 
-      const sajuResp = await fetch("/api/saju", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          birthDate: birthInfo.birthDate,
-          birthTime: birthInfo.birthTime,
-          city: birthInfo.birthPlace,
-        }),
-      });
+      const saju = sajuCalculator.calculate(year, month, day, hourNum);
 
-      let bazi: BaziResponse | null = null;
-      if (sajuResp.ok) {
-        bazi = (await sajuResp.json()) as BaziResponse;
-      }
+      const pillars = [
+        {
+          type: "년주",
+          korean: "",
+          hanja: saju.year.ganji,
+          animal: zodiacEmoji(saju.띠),
+        },
+        {
+          type: "월주",
+          korean: "",
+          hanja: saju.month.ganji,
+          animal: "",
+        },
+        {
+          type: "일주",
+          korean: "",
+          hanja: saju.day.ganji,
+          animal: "",
+        },
+        {
+          type: "시주",
+          korean: "",
+          hanja: saju.hour.ganji,
+          animal: "",
+        },
+      ];
 
-      const pillars =
-        bazi?.pillars?.map((p) => {
-          const type =
-            p.label === "year"
-              ? "년주"
-              : p.label === "month"
-                ? "월주"
-                : p.label === "day"
-                  ? "일주"
-                  : "시주";
-          const hanja = p.gan_zhi ?? `${p.gan ?? ""}${p.zhi ?? ""}`;
-          return { type, korean: "", hanja, animal: branchAnimalEmoji(p.zhi ?? hanja?.slice(1, 2)) };
-        }) ?? [];
+      const elementsPercent = saju.elements.퍼센트 as any;
+      const fiveScaled = {
+        wood: elementsPercent["목"] ?? 0,
+        fire: elementsPercent["화"] ?? 0,
+        earth: elementsPercent["토"] ?? 0,
+        metal: elementsPercent["금"] ?? 0,
+        water: elementsPercent["수"] ?? 0,
+      };
 
-      const hasSajuData = !!bazi?.day_master || !!bazi?.pillars?.length;
+      const strengths = [
+        `당신의 일간은 ${saju.일간}으로, ${saju.일간정보.상징} 타입의 기운을 가지고 있어요.`,
+        `장점: ${saju.일간정보.장점}`,
+      ];
+      const cautions = [`주의 포인트: ${saju.일간정보.단점}`];
 
-      const dmStem = hasSajuData ? bazi?.day_master?.stem ?? "—" : "—";
-      const dmInfo = bazi?.day_master?.info;
-      const dmMeaning = hasSajuData && dmInfo?.name
-        ? `${dmInfo.name}${dmInfo.element ? ` · ${dmInfo.element}` : ""}${dmInfo.polarity ? ` · ${dmInfo.polarity}` : ""}`
-        : "사주 데이터가 충분하지 않아 기본 정보만 보여드려요.";
-
-      const elementPoints = hasSajuData ? bazi?.elements?.points ?? null : null;
-      const fiveScaled = elementPoints
-        ? toFiveScale({
-            Wood: elementPoints.Wood ?? 0,
-            Fire: elementPoints.Fire ?? 0,
-            Earth: elementPoints.Earth ?? 0,
-            Metal: elementPoints.Metal ?? 0,
-            Water: elementPoints.Water ?? 0,
-          })
-        : { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
-
-      const strengths =
-        elementPoints
-          ? [
-              "당신의 사주 속 오행 흐름이 계산되었어요.",
-              "강하게 드러나는 기운을 오늘의 선택과 행동에 활용해 보세요.",
-            ]
-          : [
-              "지금은 점성술 중심으로 오늘의 흐름을 들려드리고 있어요.",
-              "사주 분석은 안정화 과정을 거친 뒤 더 풍부하게 제공될 예정입니다.",
-            ];
-      const cautions =
-        elementPoints
-          ? ["과하거나 부족한 기운이 있다면, 오늘은 균형과 페이스 조절을 조금 더 의식해 보세요."]
-          : ["사주는 참고용으로만 가볍게 받아들이고, 중요한 결정은 현실적인 정보와 함께 판단해 주세요."];
-
-      const keyMessage = horoscope.description.split(".")[0]?.trim() || horoscope.description;
+      const keyMessage = daily.overall.summary;
       const fortune: FortuneData = {
         keyMessage,
         astrology: {
-          sunSign: zodiacKo,
+          sunSign: daily.signKo,
           moonSign: "—",
           risingSign: "—",
           planets: [],
           insights: [
-            horoscope.description,
-            `Mood: ${horoscope.mood} · Color: ${horoscope.color}`,
-            `Lucky: ${horoscope.lucky_time} · ${horoscope.lucky_number} · Compatibility: ${horoscope.compatibility}`,
+            daily.overall.energy,
+            `연애: ${daily.love.status} (${daily.love.score}/5)`,
+            `커리어: ${daily.career.status} (${daily.career.score}/5)`,
+            `재물: ${daily.money.status} (${daily.money.score}/5)`,
+            `건강: ${daily.health.status} (${daily.health.score}/5, ${daily.health.bodyPart})`,
+            `행운 색: ${daily.lucky.color}, 숫자: ${daily.lucky.number}, 시간대: ${daily.lucky.time}`,
           ],
         },
         saju: {
-          pillars: pillars.length
-            ? pillars
-            : [
-                { type: "년주", korean: "", hanja: "—", animal: "✦" },
-                { type: "월주", korean: "", hanja: "—", animal: "✦" },
-                { type: "일주", korean: "", hanja: "—", animal: "✦" },
-                { type: "시주", korean: "", hanja: "—", animal: "✦" },
-              ],
-          dayMaster: { hanja: dmStem, korean: "", meaning: dmMeaning },
+          pillars,
+          dayMaster: {
+            hanja: saju.일간,
+            korean: "",
+            meaning: saju.일간정보.성격,
+          },
           strengths,
           cautions,
         },
@@ -235,12 +179,12 @@ export default function CosmicFivePage() {
           ...fiveScaled,
           analysis: {
             excess: null,
-            deficient: elementPoints ? { element: "수(水)", meaning: "균형을 위해 휴식/수분/유연함을 챙겨보세요" } : null,
+            deficient: null,
           },
         },
         integrated: {
-          commonTheme: `오늘의 키워드: ${horoscope.mood} · ${horoscope.color}`,
-          cautionSignal: `호환: ${horoscope.compatibility} — 관계에서 속도 조절`,
+          commonTheme: `오늘의 키워드: ${daily.overall.energy}`,
+          cautionSignal: `관계: ${daily.love.status}`,
           dailyGuideline: keyMessage,
         },
         microActions: [
