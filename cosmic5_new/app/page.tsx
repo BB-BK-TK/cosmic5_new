@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { StarBackground } from "@/components/cosmic/star-background";
-import { BirthInfoForm, type BirthInfo } from "@/components/cosmic/birth-info-form";
-import { KeyMessageCard } from "@/components/cosmic/key-message-card";
-import { AstrologyCard } from "@/components/cosmic/astrology-card";
-import { SajuCard } from "@/components/cosmic/saju-card";
-import { FiveElementsChart } from "@/components/cosmic/five-elements-chart";
-import { IntegratedInsightCard } from "@/components/cosmic/integrated-insight-card";
-import { MicroActionCard } from "@/components/cosmic/micro-action-card";
-import { ResultTabs } from "@/components/cosmic/result-tabs";
-import { LoadingScreen } from "@/components/cosmic/loading-screen";
+import { StarBackground } from "@/components/star-background";
+import { BirthInfoForm, type BirthInfo } from "@/components/birth-info-form";
+import { KeyMessageCard } from "@/components/key-message-card";
+import { AstrologyCard } from "@/components/astrology-card";
+import { SajuCard } from "@/components/saju-card";
+import { FiveElementsChart } from "@/components/five-elements-chart";
+import { IntegratedInsightCard } from "@/components/integrated-insight-card";
+import { MicroActionCard } from "@/components/micro-action-card";
+import { ResultTabs } from "@/components/result-tabs";
+import { LoadingScreen } from "@/components/loading-screen";
 import { cn } from "@/lib/utils";
 
 // Sample fortune data
