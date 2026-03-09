@@ -29,9 +29,9 @@ const interestOptions = [
 ];
 
 const toneOptions = [
-  { id: "warm", label: "따뜻한 위로형", icon: "🎭" },
-  { id: "intuitive", label: "직관적 공감형", icon: "💫" },
-  { id: "direct", label: "팩트 직설형", icon: "🔥" },
+  { id: "warm", label: "따뜻한 김선생님", icon: "🎭" },
+  { id: "intuitive", label: "직관적인 이선생님", icon: "💫" },
+  { id: "direct", label: "츤데레 박선생님", icon: "🔥" },
 ];
 
 const DEFAULT_BIRTH_DATE = "1990-01-01";
@@ -144,7 +144,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-text-secondary mb-2">
-              이름 <span className="text-text-muted">(선택)</span>
+              이름
             </label>
             <input
               type="text"
@@ -161,16 +161,17 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
             />
           </div>
 
-          <div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
             <label className="block text-sm text-text-secondary mb-2">
-              달력 유형 <span className="text-accent-purple">*</span>
+              생년월일 <span className="text-accent-purple">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="mb-2 flex gap-2">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, calendarType: "solar" })}
                 className={cn(
-                  "h-[44px] rounded-xl text-sm transition-all duration-200 border",
+                  "flex-1 h-[32px] rounded-full text-xs transition-all duration-200 border",
                   formData.calendarType === "solar"
                     ? "bg-accent-purple/15 border-accent-purple text-text-primary"
                     : "bg-secondary/50 border-glass-border text-text-secondary hover:border-glass-highlight"
@@ -182,7 +183,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                 type="button"
                 onClick={() => setFormData({ ...formData, calendarType: "lunar" })}
                 className={cn(
-                  "h-[44px] rounded-xl text-sm transition-all duration-200 border",
+                  "flex-1 h-[32px] rounded-full text-xs transition-all duration-200 border",
                   formData.calendarType === "lunar"
                     ? "bg-accent-purple/15 border-accent-purple text-text-primary"
                     : "bg-secondary/50 border-glass-border text-text-secondary hover:border-glass-highlight"
@@ -191,18 +192,6 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                 음력
               </button>
             </div>
-            {formData.calendarType === "lunar" && (
-              <p className="text-xs text-text-muted mt-2">
-                음력 변환은 준비 중이라, 현재는 입력값이 양력처럼 처리될 수 있어요.
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-            <label className="block text-sm text-text-secondary mb-2">
-              생년월일 <span className="text-accent-purple">*</span>
-            </label>
             <div className="space-y-2">
               {birthDateMode === "picker" ? (
                 <input
@@ -368,7 +357,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
         <h2 className="text-lg font-medium text-text-primary mb-4">
           관심 영역
         </h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {interestOptions.map((option) => (
             <button
               key={option.id}
@@ -392,7 +381,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
         <h2 className="text-lg font-medium text-text-primary mb-4">
           말투 선택
         </h2>
-        <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-2">
           {toneOptions.map((option) => (
             <button
               key={option.id}
@@ -401,8 +390,8 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                 setFormData({ ...formData, toneStyle: option.id })
               }
               className={cn(
-                "w-full p-4 rounded-xl text-left transition-all duration-200",
-                "flex items-center gap-3",
+                "w-full p-3 rounded-xl text-center transition-all duration-200",
+                "flex flex-col items-center justify-center gap-2",
                 formData.toneStyle === option.id
                   ? "bg-accent-purple/15 border border-accent-purple"
                   : "bg-secondary/50 border border-transparent hover:bg-secondary"
@@ -411,7 +400,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
               <span className="text-xl">{option.icon}</span>
               <span
                 className={cn(
-                  "text-sm",
+                  "text-xs leading-snug",
                   formData.toneStyle === option.id
                     ? "text-text-primary"
                     : "text-text-secondary"
