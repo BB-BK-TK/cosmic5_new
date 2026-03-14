@@ -52,6 +52,10 @@ export interface AstrologyReadingViewModel {
   interpretationFacts: AstrologyInterpretationFacts;
   interpretedSummary: string;
   domainCards: AstrologyDomainCard[];
+  /** Phase 3: per-sign interpretation (from interpretation engine) */
+  personality?: string;
+  strengths?: string[];
+  cautions?: string[];
   styleReadyText: {
     heroQuote: string;
     energyLabel: string;
@@ -71,6 +75,10 @@ export interface AstrologyCompatibilityResult {
   summary: string;
   strengths: string[];
   challenges: string[];
+  /** Phase 3: rule-based explanation */
+  attractionPattern?: string;
+  communicationPattern?: string;
+  cautionAreas?: string[];
 }
 
 // ============== Saju ==============
@@ -103,11 +111,18 @@ export interface SajuInterpretationFacts {
   dominantElement: string | null;
   weakElement: string | null;
   elementBalanceNote: string;
+  /** Phase 3: domain-specific reading */
+  relationshipsReading?: string;
+  workReading?: string;
+  moneyReading?: string;
+  healthReading?: string;
+  internalBalanceSummary?: string;
+  practicalAdvice?: string;
 }
 
 export interface SajuDomainCard {
   id: string;
-  domain: "character" | "strengths" | "cautions" | "advice";
+  domain: "character" | "strengths" | "cautions" | "advice" | "relationships" | "work" | "money" | "health";
   title: string;
   summary: string;
   keyPoint?: string;

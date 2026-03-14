@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { StarBackground } from "@/components/star-background";
 import { BirthInfoForm, type BirthInfo } from "@/components/birth-info-form";
 import { ResultTabs } from "@/components/result-tabs";
@@ -11,6 +11,7 @@ import { SajuCard } from "@/components/saju-card";
 import { FiveElementsChart } from "@/components/five-elements-chart";
 import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
+import { StyleSelector, NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
 import { cn } from "@/lib/utils";
 import { SajuCalculator } from "@/lib/saju-db";
 import { AstrologyCalculator } from "@/lib/astrology-db";
@@ -19,6 +20,8 @@ import { runInterpretation } from "@/lib/interpretation-layer";
 import { buildResultViewModel, getViewModelSliceForPeriod } from "@/lib/presentation-layer";
 import type { ResultViewModel } from "@/types/result-schema";
 import type { AstrologyPeriodKey } from "@/types/result-schema";
+import type { SynthesisOutput } from "@/types/ai-types";
+import type { ReadingStyleKey } from "@/types/ai-types";
 
 const TAB_TO_PERIOD: Record<string, AstrologyPeriodKey> = {
   today: "daily",
@@ -33,6 +36,10 @@ export default function CosmicFivePage() {
   const [resultViewModel, setResultViewModel] = useState<ResultViewModel | null>(null);
   const [lastBirthInfo, setLastBirthInfo] = useState<BirthInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<StyleOption>(NO_STYLE_KEY);
+  const [styleResultCache, setStyleResultCache] = useState<Record<string, SynthesisOutput>>({});
+  const [styleLoading, setStyleLoading] = useState(false);
+  const [styleError, setStyleError] = useState<string | null>(null);
   const isSubmitting = view === "loading";
   const astrologyCalculator = new AstrologyCalculator();
   const sajuCalculator = new SajuCalculator();
@@ -58,6 +65,9 @@ export default function CosmicFivePage() {
         activePeriod: "daily",
       });
       setResultViewModel(viewModel);
+      setSelectedStyle(NO_STYLE_KEY);
+      setStyleResultCache({});
+      setStyleError(null);
       setView("result");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -76,6 +86,96 @@ export default function CosmicFivePage() {
     if (!resultViewModel) return null;
     return getViewModelSliceForPeriod(resultViewModel, period);
   }, [resultViewModel, period]);
+
+  const styleCacheKey = selectedStyle !== NO_STYLE_KEY ? `${period}:${selectedStyle}` : "";
+  const displayStyleResult: SynthesisOutput | null = styleCacheKey ? styleResultCache[styleCacheKey] ?? null : null;
+
+  const fetchStyleRewrite = useCallback(
+    async (style: ReadingStyleKey) => {
+      if (!resultViewModel || !slice) return;
+      const key = `${period}:${style}`;
+      setStyleError(null);
+      setStyleLoading(true);
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "style",
+            payload: {
+              promptVersion: "v1",
+              style,
+              interpretation: {
+                heroQuote: slice.heroSummary.message,
+                integratedTheme: resultViewModel.styleReadyText.integratedTheme,
+                cautionSignal: resultViewModel.styleReadyText.cautionSignal,
+                dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
+                lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme ?? "",
+              },
+            },
+          }),
+        });
+        const json = await res.json();
+        if (json.ok && json.data) {
+          setStyleResultCache((prev) => ({ ...prev, [key]: json.data }));
+        } else {
+          const msg = json.message ?? json.error ?? "스타일 변환에 실패했습니다.";
+          setStyleError(res.status === 503 ? "AI를 사용할 수 없습니다. 원문을 표시합니다." : msg);
+        }
+      } catch (e) {
+        setStyleError(e instanceof Error ? e.message : "네트워크 오류. 원문을 표시합니다.");
+      } finally {
+        setStyleLoading(false);
+      }
+    },
+    [resultViewModel, slice, period]
+  );
+
+  const handleStyleChange = useCallback((style: StyleOption) => {
+    setSelectedStyle(style);
+  }, []);
+
+  useEffect(() => {
+    if (selectedStyle === NO_STYLE_KEY || !resultViewModel || !slice) return;
+    const key = `${period}:${selectedStyle}`;
+    if (styleResultCache[key]) return;
+    void fetchStyleRewrite(selectedStyle as ReadingStyleKey);
+  }, [period, selectedStyle, resultViewModel, slice, styleResultCache, fetchStyleRewrite]);
+
+  const handleStyleRetry = useCallback(() => {
+    if (selectedStyle !== NO_STYLE_KEY) void fetchStyleRewrite(selectedStyle);
+  }, [selectedStyle, fetchStyleRewrite]);
+
+  const heroDisplay = useMemo(() => {
+    if (!slice) return null;
+    if (displayStyleResult) {
+      return {
+        ...slice.heroSummary,
+        message: displayStyleResult.heroQuote,
+        subtitle: displayStyleResult.lifetimeTheme || slice.heroSummary.subtitle,
+      };
+    }
+    return slice.heroSummary;
+  }, [slice, displayStyleResult]);
+
+  const integratedDisplay = useMemo(() => {
+    if (!resultViewModel) return null;
+    const base = {
+      commonTheme: resultViewModel.styleReadyText.integratedTheme,
+      cautionSignal: resultViewModel.styleReadyText.cautionSignal,
+      dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
+      lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
+    };
+    if (displayStyleResult) {
+      return {
+        commonTheme: displayStyleResult.integratedTheme,
+        cautionSignal: displayStyleResult.cautionSignal,
+        dailyGuideline: displayStyleResult.dailyGuideline,
+        lifetimeTheme: displayStyleResult.lifetimeTheme ?? base.lifetimeTheme,
+      };
+    }
+    return base;
+  }, [resultViewModel, displayStyleResult]);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -115,7 +215,15 @@ export default function CosmicFivePage() {
 
             <MetadataTags tags={resultViewModel.metadataTags} />
 
-            <HeroSummary data={slice.heroSummary} />
+            <StyleSelector
+              value={selectedStyle}
+              onChange={handleStyleChange}
+              isLoading={styleLoading}
+              error={styleError}
+              onRetry={handleStyleRetry}
+            />
+
+            <HeroSummary data={heroDisplay ?? slice.heroSummary} />
 
             <DomainCards cards={slice.domainCards} />
 
@@ -135,6 +243,9 @@ export default function CosmicFivePage() {
                       `행운 색: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyColor}, 숫자: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyNumber}, 시간대: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyTime}`,
                     ]
                   : ["오늘의 흐름을 편하게 받아들이세요."],
+                personality: resultViewModel.astrology.byPeriod[period]?.personality,
+                strengths: resultViewModel.astrology.byPeriod[period]?.strengths,
+                cautions: resultViewModel.astrology.byPeriod[period]?.cautions,
               }}
             />
 
@@ -147,18 +258,22 @@ export default function CosmicFivePage() {
                   `장점: ${resultViewModel.saju.interpretationFacts.dayMasterStrengths}`,
                 ],
                 cautions: [`주의 포인트: ${resultViewModel.saju.interpretationFacts.dayMasterCautions}`],
+                internalBalanceSummary: resultViewModel.saju.interpretationFacts.internalBalanceSummary,
+                practicalAdvice: resultViewModel.saju.interpretationFacts.practicalAdvice,
               }}
             />
 
             <FiveElementsChart data={resultViewModel.fiveElements} />
 
             <IntegratedInsightCard
-              data={{
-                commonTheme: resultViewModel.styleReadyText.integratedTheme,
-                cautionSignal: resultViewModel.styleReadyText.cautionSignal,
-                dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
-                lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
-              }}
+              data={
+                integratedDisplay ?? {
+                  commonTheme: resultViewModel.styleReadyText.integratedTheme,
+                  cautionSignal: resultViewModel.styleReadyText.cautionSignal,
+                  dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
+                  lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
+                }
+              }
             />
 
             <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />

@@ -17,6 +17,9 @@ interface SajuData {
   };
   strengths: string[];
   cautions: string[];
+  /** Phase 3: balance summary and practical advice */
+  internalBalanceSummary?: string;
+  practicalAdvice?: string;
 }
 
 interface SajuCardProps {
@@ -57,6 +60,20 @@ export function SajuCard({ data }: SajuCardProps) {
           {data.dayMaster.meaning ? `- ${data.dayMaster.meaning}` : ""}
         </p>
       </div>
+
+      {/* Phase 3: internal balance and practical advice */}
+      {data.internalBalanceSummary && (
+        <div className="mb-4 p-4 rounded-xl bg-secondary/20">
+          <h3 className="text-sm text-text-primary mb-2">오행 균형</h3>
+          <p className="text-sm text-text-secondary leading-relaxed">{data.internalBalanceSummary}</p>
+        </div>
+      )}
+      {data.practicalAdvice && (
+        <div className="mb-4 p-4 rounded-xl bg-accent-teal/5 border border-accent-teal/20">
+          <h3 className="text-sm text-text-primary mb-2">실천 조언</h3>
+          <p className="text-sm text-text-secondary leading-relaxed">{data.practicalAdvice}</p>
+        </div>
+      )}
 
       {/* Divider */}
       <div className="h-px bg-glass-border mb-6" />

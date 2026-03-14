@@ -14,6 +14,10 @@ interface AstrologyData {
     house: number;
   }[];
   insights: string[];
+  /** Phase 3: per-sign interpretation */
+  personality?: string;
+  strengths?: string[];
+  cautions?: string[];
 }
 
 interface AstrologyCardProps {
@@ -57,6 +61,39 @@ export function AstrologyCard({ data }: AstrologyCardProps) {
         </div>
       ) : (
         <p className="text-xs text-text-muted mb-6">태양만 표시됩니다. 출생시간 입력 시 달·승승 정보를 제공할 예정입니다.</p>
+      )}
+
+      {/* Phase 3: personality / strengths / cautions when present */}
+      {data.personality && (
+        <div className="mb-4">
+          <p className="text-sm text-text-secondary leading-relaxed">{data.personality}</p>
+        </div>
+      )}
+      {(data.strengths?.length ?? 0) > 0 && (
+        <div className="mb-4">
+          <h3 className="text-sm text-text-primary mb-2">강점</h3>
+          <ul className="space-y-1 text-sm text-text-secondary">
+            {data.strengths!.map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-positive mt-0.5">•</span>
+                {s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {(data.cautions?.length ?? 0) > 0 && (
+        <div className="mb-4">
+          <h3 className="text-sm text-text-primary mb-2">주의할 점</h3>
+          <ul className="space-y-1 text-sm text-text-secondary">
+            {data.cautions!.map((c, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-caution mt-0.5">•</span>
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {/* Divider */}

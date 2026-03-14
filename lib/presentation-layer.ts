@@ -78,9 +78,13 @@ export function buildResultViewModel(
       source: "astrology",
     });
   }
+  const sajuFacts = interpretation.saju.interpretationFacts;
+  const balanceSummary = sajuFacts.internalBalanceSummary ?? "";
   whySections.push({
     title: "사주 기반",
-    content: `일간 ${calculation.saju.ilgan}, 사주팔자와 오행 분포를 반영했습니다. ${interpretation.saju.interpretationFacts.dominantElement ? `강한 오행: ${interpretation.saju.interpretationFacts.dominantElement}. ` : ""}${interpretation.saju.interpretationFacts.weakElement ? `보강하면 좋은 오행: ${interpretation.saju.interpretationFacts.weakElement}.` : ""}`,
+    content: balanceSummary
+      ? `일간 ${calculation.saju.ilgan}, 사주팔자와 오행 분포를 반영했습니다. ${balanceSummary}`
+      : `일간 ${calculation.saju.ilgan}, 사주팔자와 오행 분포를 반영했습니다. ${sajuFacts.dominantElement ? `강한 오행: ${sajuFacts.dominantElement}. ` : ""}${sajuFacts.weakElement ? `보강하면 좋은 오행: ${sajuFacts.weakElement}.` : ""}`,
     source: "saju",
   });
 
@@ -133,6 +137,7 @@ export function buildResultViewModel(
       const interp = interpretation.astrology[p];
       const raw = calculation.astrology.byPeriod[p];
       if (!raw) return [p, null];
+      const rich = interp as { personality?: string; strengths?: string[]; cautions?: string[] } | undefined;
       const vm = {
         rawCalculation: {
           signKo: raw.signKo,
@@ -150,6 +155,9 @@ export function buildResultViewModel(
         interpretationFacts: interp?.interpretationFacts ?? ({} as any),
         interpretedSummary: interp?.interpretedSummary ?? raw.summary,
         domainCards: interp?.domainCards ?? [],
+        personality: rich?.personality,
+        strengths: rich?.strengths,
+        cautions: rich?.cautions,
         styleReadyText: { heroQuote: raw.summary, energyLabel: raw.energy, domainLabels: {} },
         metadata: { period: raw.period, periodLabel: raw.periodLabel, sign: raw.signKo, dateLabel: formatDateByTab(raw.period, now), source: "astrology" as const },
       };
