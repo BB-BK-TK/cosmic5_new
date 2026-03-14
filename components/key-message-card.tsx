@@ -34,12 +34,12 @@ export function KeyMessageCard({ message, date }: KeyMessageCardProps) {
           <span>☾</span>
         </div>
 
-        {/* Message */}
+        {/* Message — Phase 1: fallback so we never show blank */}
         <p
           className="text-xl md:text-2xl font-light leading-relaxed text-text-primary mb-6"
           style={{ fontFamily: "var(--font-cormorant), serif" }}
         >
-          {`"${message}"`}
+          {`"${message || "오늘 하루 좋은 에너지가 함께하길."}"`}
         </p>
 
         {/* Date */}

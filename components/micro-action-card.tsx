@@ -41,7 +41,7 @@ export function MicroActionCard({ actions }: MicroActionCardProps) {
       </p>
 
       <div className="space-y-3 mb-6">
-        {actions.map((action) => {
+        {(actions?.length ? actions : [{ id: "fallback", text: "오늘 한 가지라도 자신에게 맞는 일을 해보세요.", tag: "일상" }]).map((action) => {
           const isCompleted = completedActions.includes(action.id);
           return (
             <button

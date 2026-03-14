@@ -37,11 +37,11 @@ export function SajuCard({ data }: SajuCardProps) {
             )}
           >
             <span className="text-xs text-text-muted mb-2">{pillar.type}</span>
-            <span className="text-lg text-accent-teal mb-1">{pillar.hanja}</span>
+            <span className="text-lg text-accent-teal mb-1">{pillar.hanja || "—"}</span>
             <span className="text-xs text-text-secondary mb-2">
-              {pillar.korean}
+              {pillar.korean || "—"}
             </span>
-            <span className="text-lg">{pillar.animal}</span>
+            <span className="text-lg">{pillar.animal ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -50,22 +50,24 @@ export function SajuCard({ data }: SajuCardProps) {
       <div className="bg-secondary/30 rounded-xl p-4 mb-6">
         <p className="text-sm text-text-primary">
           <span className="text-accent-gold">일간:</span>{" "}
-          <span className="text-accent-teal">{data.dayMaster.hanja}</span>{" "}
-          <span className="text-text-secondary">({data.dayMaster.korean})</span>{" "}
-          - {data.dayMaster.meaning}
+          <span className="text-accent-teal">{data.dayMaster.hanja || "—"}</span>{" "}
+          {data.dayMaster.korean && (
+            <span className="text-text-secondary">({data.dayMaster.korean}) </span>
+          )}
+          {data.dayMaster.meaning ? `- ${data.dayMaster.meaning}` : ""}
         </p>
       </div>
 
       {/* Divider */}
       <div className="h-px bg-glass-border mb-6" />
 
-      {/* Strengths */}
+      {/* Strengths — Phase 1: fallback when empty */}
       <div className="mb-4">
         <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
           <span>💪</span> 강점
         </h3>
         <div className="space-y-2">
-          {data.strengths.map((strength, index) => (
+          {(data.strengths?.length ? data.strengths : ["당신만의 강점을 살려보세요."]).map((strength, index) => (
             <p
               key={index}
               className="text-sm text-text-secondary flex items-start gap-2"
@@ -77,13 +79,13 @@ export function SajuCard({ data }: SajuCardProps) {
         </div>
       </div>
 
-      {/* Cautions */}
+      {/* Cautions — Phase 1: fallback when empty */}
       <div>
         <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
           <span>⚠️</span> 주의
         </h3>
         <div className="space-y-2">
-          {data.cautions.map((caution, index) => (
+          {(data.cautions?.length ? data.cautions : ["무리하지 않는 것이 좋아요."]).map((caution, index) => (
             <p
               key={index}
               className="text-sm text-text-secondary flex items-start gap-2"

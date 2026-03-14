@@ -140,9 +140,9 @@ export function FiveElementsChart({ data }: FiveElementsChartProps) {
       {/* Divider */}
       <div className="h-px bg-glass-border mb-4" />
 
-      {/* Analysis */}
+      {/* Analysis — Phase 1: fallback when neither excess nor deficient */}
       <div className="space-y-2">
-        {data.analysis.excess && (
+        {data.analysis?.excess && (
           <p className="text-sm flex items-start gap-2">
             <span className="text-caution">→</span>
             <span className="text-text-secondary">
@@ -152,7 +152,7 @@ export function FiveElementsChart({ data }: FiveElementsChartProps) {
             </span>
           </p>
         )}
-        {data.analysis.deficient && (
+        {data.analysis?.deficient && (
           <p className="text-sm flex items-start gap-2">
             <span className="text-accent-teal">→</span>
             <span className="text-text-secondary">
@@ -161,6 +161,9 @@ export function FiveElementsChart({ data }: FiveElementsChartProps) {
               {data.analysis.deficient.meaning}
             </span>
           </p>
+        )}
+        {!data.analysis?.excess && !data.analysis?.deficient && (
+          <p className="text-sm text-text-muted">오행이 고르게 분포되어 있어요.</p>
         )}
       </div>
     </GlassCard>

@@ -7,6 +7,8 @@ interface IntegratedInsightData {
   commonTheme: string;
   cautionSignal: string;
   dailyGuideline: string;
+  /** Phase 1: optional lifetime theme from astrology engine */
+  lifetimeTheme?: string;
 }
 
 interface IntegratedInsightCardProps {
@@ -28,7 +30,7 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
           )}
         >
           <p className="text-sm text-text-secondary leading-relaxed">
-            {data.commonTheme}
+            {data.commonTheme || "오늘의 에너지를 살려보세요."}
           </p>
         </div>
       </div>
@@ -45,7 +47,7 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
           )}
         >
           <p className="text-sm text-text-secondary leading-relaxed">
-            {data.cautionSignal}
+            {data.cautionSignal || "무리하지 않는 것이 좋아요."}
           </p>
         </div>
       </div>
@@ -53,8 +55,8 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
       {/* Divider */}
       <div className="h-px bg-glass-border mb-6" />
 
-      {/* Daily Guideline */}
-      <div>
+      {/* Daily Guideline — always show; fallback if empty */}
+      <div className="mb-6">
         <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
           <span className="text-accent-teal">📍</span> 오늘의 선택 기준
         </h3>
@@ -62,9 +64,24 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
           className="text-base text-text-primary text-center py-4 leading-relaxed"
           style={{ fontFamily: "var(--font-cormorant), serif" }}
         >
-          {`"${data.dailyGuideline}"`}
+          {`"${data.dailyGuideline || "오늘 하루를 편하게 흐름에 맡겨 보세요."}"`}
         </p>
       </div>
+
+      {/* Phase 1: Lifetime theme when available */}
+      {data.lifetimeTheme && (
+        <>
+          <div className="h-px bg-glass-border mb-6" />
+          <div>
+            <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
+              <span className="text-accent-gold">✦</span> 인생 테마
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {data.lifetimeTheme}
+            </p>
+          </div>
+        </>
+      )}
     </GlassCard>
   );
 }
