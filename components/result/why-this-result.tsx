@@ -20,7 +20,7 @@ export function WhyThisResult({ basedOn, sections, className }: WhyThisResultPro
         onClick={() => setExpanded(!expanded)}
         className="w-full text-left flex items-center justify-between gap-2 py-2"
       >
-        <span className="text-sm font-medium text-text-primary">왜 이 결과가 나왔나요?</span>
+        <span className="text-sm font-medium text-text-primary">이 해석의 근거</span>
         <span className="text-text-muted text-lg leading-none">{expanded ? "−" : "+"}</span>
       </button>
       {expanded && (

@@ -19,9 +19,8 @@ export function DomainCards({ cards, className }: DomainCardsProps) {
   if (!cards?.length) return null;
   return (
     <div className={cn("space-y-4", className)}>
-      <h2 className="text-lg font-medium text-text-primary flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-accent-purple" />
-        영역별 해석
+      <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wider mb-3">
+        생활 영역별 해석
       </h2>
       <div className="grid gap-3">
         {cards.map((card) => (

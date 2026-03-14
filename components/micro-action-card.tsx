@@ -30,9 +30,8 @@ export function MicroActionCard({ actions }: MicroActionCardProps) {
   return (
     <GlassCard>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-text-primary flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-gold" />
-          오늘의 실행
+        <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wider">
+          오늘의 실천
         </h2>
       </div>
 

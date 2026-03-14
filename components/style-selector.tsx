@@ -1,19 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ReadingStyleKey } from "@/types/ai-types";
+import { getStylePresets, NO_STYLE_KEY, type StyleOption } from "@/lib/data";
 
-export const NO_STYLE_KEY = "none" as const;
-export type StyleOption = ReadingStyleKey | typeof NO_STYLE_KEY;
-
-export const STYLE_OPTIONS: { value: StyleOption; label: string; description?: string }[] = [
-  { value: NO_STYLE_KEY, label: "원문", description: "기준 해석 그대로" },
-  { value: "warm_healing", label: "따뜻·치유" },
-  { value: "best_friend", label: "친구처럼" },
-  { value: "mystical_poetic", label: "신비·시적" },
-  { value: "elegant_premium", label: "우아·프리미엄" },
-  { value: "direct_practical", label: "직설·실용" },
-];
+export { NO_STYLE_KEY };
+export type { StyleOption };
 
 interface StyleSelectorProps {
   value: StyleOption;
@@ -43,7 +34,7 @@ export function StyleSelector({
         )}
       </div>
       <div className="flex flex-wrap gap-2">
-        {STYLE_OPTIONS.map((opt) => (
+        {getStylePresets().map((opt) => (
           <button
             key={opt.value}
             type="button"

@@ -105,11 +105,14 @@ export async function POST(request: Request) {
   } catch (e) {
     const err = e instanceof Error ? e : new Error("Unknown error");
     const isRateLimit = err.message.includes("RATE_LIMIT");
+    const message = isRateLimit
+      ? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
+      : err.message;
     return Response.json(
       {
         ok: false,
         error: isRateLimit ? "RATE_LIMIT" : "AI_UNAVAILABLE",
-        message: err.message,
+        message,
       } satisfies AIApiErrorResponse,
       { status: isRateLimit ? 429 : 502 }
     );

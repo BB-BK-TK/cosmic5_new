@@ -3,6 +3,8 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "./glass-card";
+import { getStylePresets, NO_STYLE_KEY } from "@/lib/data";
+import type { StyleOption } from "@/lib/data";
 
 interface BirthInfoFormProps {
   onSubmit: (data: BirthInfo) => void;
@@ -16,7 +18,8 @@ export interface BirthInfo {
   birthTime: string;
   birthPlace: string;
   interests: string[];
-  toneStyle: string;
+  /** Expression style chosen at input; used for result (no toggle in output). */
+  toneStyle: StyleOption;
 }
 
 const interestOptions = [
@@ -28,11 +31,6 @@ const interestOptions = [
   { id: "overall", label: "총운" },
 ];
 
-const toneOptions = [
-  { id: "warm", label: "따뜻한 김선생님", icon: "🎭" },
-  { id: "intuitive", label: "직관적인 이선생님", icon: "💫" },
-  { id: "direct", label: "츤데레 박선생님", icon: "🔥" },
-];
 
 const DEFAULT_BIRTH_DATE = "1990-01-01";
 
@@ -106,7 +104,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
     birthTime: "",
     birthPlace: "",
     interests: [],
-    toneStyle: "warm",
+    toneStyle: NO_STYLE_KEY,
   });
 
   const [birthDateMode, setBirthDateMode] = useState<"picker" | "manual">("picker");
@@ -379,35 +377,26 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
 
       <GlassCard>
         <h2 className="text-lg font-medium text-text-primary mb-4">
-          말투 선택
+          표현 스타일
         </h2>
-        <div className="grid grid-cols-3 gap-2">
-          {toneOptions.map((option) => (
+        <p className="text-xs text-text-muted mb-3">
+          해석을 어떤 말투로 보여줄지 선택하세요. 결과 화면에서는 바꿀 수 없어요.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {getStylePresets().map((opt) => (
             <button
-              key={option.id}
+              key={opt.value}
               type="button"
-              onClick={() =>
-                setFormData({ ...formData, toneStyle: option.id })
-              }
+              onClick={() => setFormData({ ...formData, toneStyle: opt.value })}
               className={cn(
-                "w-full p-3 rounded-xl text-center transition-all duration-200",
-                "flex flex-col items-center justify-center gap-2",
-                formData.toneStyle === option.id
-                  ? "bg-accent-purple/15 border border-accent-purple"
-                  : "bg-secondary/50 border border-transparent hover:bg-secondary"
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                "border",
+                formData.toneStyle === opt.value
+                  ? "bg-accent-purple/20 border-accent-purple/50 text-text-primary"
+                  : "bg-secondary/50 border-glass-border text-text-secondary hover:border-glass-highlight hover:text-text-primary"
               )}
             >
-              <span className="text-xl">{option.icon}</span>
-              <span
-                className={cn(
-                  "text-xs leading-snug",
-                  formData.toneStyle === option.id
-                    ? "text-text-primary"
-                    : "text-text-secondary"
-                )}
-              >
-                {option.label}
-              </span>
+              {opt.label}
             </button>
           ))}
         </div>
@@ -448,7 +437,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
             birthTime: "14:30",
             birthPlace: "서울",
             interests: ["career_money", "love_relationship"],
-            toneStyle: "warm",
+            toneStyle: NO_STYLE_KEY,
           })
         }
         disabled={isLoading}

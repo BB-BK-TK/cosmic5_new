@@ -11,7 +11,8 @@ import { SajuCard } from "@/components/saju-card";
 import { FiveElementsChart } from "@/components/five-elements-chart";
 import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
-import { StyleSelector, NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
+import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
+import { getStylePresets } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { SajuCalculator } from "@/lib/saju-db";
 import { AstrologyCalculator } from "@/lib/astrology-db";
@@ -65,7 +66,7 @@ export default function CosmicFivePage() {
         activePeriod: "daily",
       });
       setResultViewModel(viewModel);
-      setSelectedStyle(NO_STYLE_KEY);
+      setSelectedStyle(birthInfo.toneStyle);
       setStyleResultCache({});
       setStyleError(null);
       setView("result");
@@ -119,8 +120,10 @@ export default function CosmicFivePage() {
         if (json.ok && json.data) {
           setStyleResultCache((prev) => ({ ...prev, [key]: json.data }));
         } else {
-          const msg = json.message ?? json.error ?? "스타일 변환에 실패했습니다.";
-          setStyleError(res.status === 503 ? "AI를 사용할 수 없습니다. 원문을 표시합니다." : msg);
+          let msg = json.message ?? "스타일 변환에 실패했습니다.";
+          if (res.status === 503) msg = "AI를 사용할 수 없습니다. 원문을 표시합니다.";
+          else if (res.status === 429 || json.error === "RATE_LIMIT") msg = "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
+          setStyleError(msg);
         }
       } catch (e) {
         setStyleError(e instanceof Error ? e.message : "네트워크 오류. 원문을 표시합니다.");
@@ -130,10 +133,6 @@ export default function CosmicFivePage() {
     },
     [resultViewModel, slice, period]
   );
-
-  const handleStyleChange = useCallback((style: StyleOption) => {
-    setSelectedStyle(style);
-  }, []);
 
   useEffect(() => {
     if (selectedStyle === NO_STYLE_KEY || !resultViewModel || !slice) return;
@@ -210,24 +209,58 @@ export default function CosmicFivePage() {
         {view === "loading" && <LoadingScreen />}
 
         {view === "result" && resultViewModel && slice && (
-          <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="space-y-8 animate-in fade-in duration-500">
             <ResultTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <MetadataTags tags={resultViewModel.metadataTags} />
+            {/* Hero: main message */}
+            <section className="space-y-4">
+              {styleError && (
+                <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-caution/10 border border-caution/20 text-sm text-text-secondary">
+                  <span>{styleError}</span>
+                  <button
+                    type="button"
+                    onClick={handleStyleRetry}
+                    className="text-accent-purple hover:underline whitespace-nowrap font-medium"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+              )}
+              {styleLoading && selectedStyle !== NO_STYLE_KEY && (
+                <p className="text-sm text-text-muted text-center">선택한 표현 스타일로 변환 중입니다.</p>
+              )}
+              <HeroSummary data={heroDisplay ?? slice.heroSummary} />
+            </section>
 
-            <StyleSelector
-              value={selectedStyle}
-              onChange={handleStyleChange}
-              isLoading={styleLoading}
-              error={styleError}
-              onRetry={handleStyleRetry}
-            />
+            {/* Identity & chart snapshot */}
+            <section className="space-y-3">
+              <p className="text-xs text-text-muted text-center">
+                {resultViewModel.astrology.sunSign} · 일간 {resultViewModel.saju.rawCalculation.ilgan} · {resultViewModel.metadataTags.find(t => t.label === "기간")?.value ?? "오늘"}
+                {selectedStyle !== NO_STYLE_KEY && (
+                  <> · 표현 스타일: {getStylePresets().find(p => p.value === selectedStyle)?.label ?? selectedStyle}</>
+                )}
+              </p>
+              <MetadataTags tags={resultViewModel.metadataTags} />
+            </section>
 
-            <HeroSummary data={heroDisplay ?? slice.heroSummary} />
+            {/* Main interpretation */}
+            <section className="space-y-4">
+              <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wider">통합 해석</h2>
+              <IntegratedInsightCard
+                data={
+                  integratedDisplay ?? {
+                    commonTheme: resultViewModel.styleReadyText.integratedTheme,
+                    cautionSignal: resultViewModel.styleReadyText.cautionSignal,
+                    dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
+                    lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
+                  }
+                }
+              />
+            </section>
 
-            <DomainCards cards={slice.domainCards} />
-
-            <AstrologyCard
+            {/* Chart detail: astrology + saju */}
+            <section className="space-y-6">
+              <AstrologyCard
               data={{
                 sunSign: resultViewModel.astrology.sunSign,
                 moonSign: resultViewModel.astrology.moonSign,
@@ -264,31 +297,38 @@ export default function CosmicFivePage() {
             />
 
             <FiveElementsChart data={resultViewModel.fiveElements} />
+            </section>
 
-            <IntegratedInsightCard
-              data={
-                integratedDisplay ?? {
-                  commonTheme: resultViewModel.styleReadyText.integratedTheme,
-                  cautionSignal: resultViewModel.styleReadyText.cautionSignal,
-                  dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
-                  lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
-                }
-              }
-            />
+            {/* Domain cards */}
+            <section>
+              <DomainCards cards={slice.domainCards} />
+            </section>
 
-            <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
+            {/* Why this reading */}
+            <section>
+              <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
+            </section>
 
-            <MicroActionCard actions={resultViewModel.microActions} />
+            {/* Advice & takeaway */}
+            <section>
+              <MicroActionCard actions={resultViewModel.microActions} />
+            </section>
+
+            {!lastBirthInfo?.birthTime && (
+              <p className="text-xs text-text-muted text-center">
+                출생시간을 입력하면 일간·사주가 더 정확히 반영됩니다.
+              </p>
+            )}
 
             <button
               onClick={handleRegenerate}
               className={cn(
                 "w-full h-[52px] rounded-xl font-medium text-sm",
                 "bg-transparent border border-glass-border text-text-secondary",
-                "transition-all duration-200 hover:bg-glass-bg flex items-center justify-center gap-2"
+                "transition-all duration-200 hover:bg-glass-bg hover:border-glass-border-hover flex items-center justify-center gap-2"
               )}
             >
-              <span>↻</span> 다른 해석 보기
+              <span>↻</span> 다시 보기
             </button>
           </div>
         )}

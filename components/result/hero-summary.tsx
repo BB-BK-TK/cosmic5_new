@@ -25,21 +25,16 @@ export function HeroSummary({ data, className }: HeroSummaryProps) {
         }}
       />
       <div className="relative z-10">
-        <div className="flex items-center justify-center gap-4 mb-6 text-xl text-accent-gold/60">
-          <span>☽</span>
-          <span className="text-text-primary">✦</span>
-          <span>☾</span>
-        </div>
         <p
-          className="text-xl md:text-2xl font-light leading-relaxed text-text-primary mb-4"
+          className="text-xl md:text-2xl font-light leading-relaxed text-text-primary mb-3"
           style={{ fontFamily: "var(--font-cormorant), serif" }}
         >
-          {`"${data.message || "오늘 하루 좋은 에너지가 함께하길."}"`}
+          {data.message || "오늘 하루 좋은 에너지가 함께하길."}
         </p>
         {data.subtitle && (
-          <p className="text-sm text-text-secondary mb-4">{data.subtitle}</p>
+          <p className="text-sm text-text-secondary mb-2">{data.subtitle}</p>
         )}
-        <p className="text-sm text-text-muted">{data.dateLabel}</p>
+        <p className="text-xs text-text-muted">{data.dateLabel}</p>
       </div>
     </div>
   );

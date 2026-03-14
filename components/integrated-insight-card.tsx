@@ -20,9 +20,7 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
     <GlassCard badge={{ label: "통합 인사이트", variant: "gold" }}>
       {/* Common Theme */}
       <div className="mb-6">
-        <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
-          <span className="text-accent-purple">🔗</span> 공통 테마
-        </h3>
+        <h3 className="text-sm font-medium text-text-primary mb-3">공통 테마</h3>
         <div
           className={cn(
             "p-4 rounded-xl",
@@ -37,9 +35,7 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
 
       {/* Caution Signal */}
       <div className="mb-6">
-        <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
-          <span className="text-caution">⚡</span> 주의 신호
-        </h3>
+        <h3 className="text-sm font-medium text-text-primary mb-3">주의할 점</h3>
         <div
           className={cn(
             "p-4 rounded-xl",
@@ -73,9 +69,7 @@ export function IntegratedInsightCard({ data }: IntegratedInsightCardProps) {
         <>
           <div className="h-px bg-glass-border mb-6" />
           <div>
-            <h3 className="text-sm text-text-primary mb-3 flex items-center gap-2">
-              <span className="text-accent-gold">✦</span> 인생 테마
-            </h3>
+            <h3 className="text-sm font-medium text-text-primary mb-3">인생 테마</h3>
             <p className="text-sm text-text-secondary leading-relaxed">
               {data.lifetimeTheme}
             </p>
