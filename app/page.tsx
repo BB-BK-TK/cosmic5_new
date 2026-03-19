@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, type ReactNode } from "react";
 import { StarBackground } from "@/components/star-background";
 import { BirthInfoForm, type BirthInfo } from "@/components/birth-info-form";
 import { ResultTabs } from "@/components/result-tabs";
@@ -14,6 +14,7 @@ import { MicroActionCard } from "@/components/micro-action-card";
 import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
 import { getStylePresets } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { GlassCard } from "@/components/glass-card";
 import { SajuCalculator } from "@/lib/saju-db";
 import { AstrologyCalculator } from "@/lib/astrology-db";
 import { runCalculations } from "@/lib/calculation-layer";
@@ -31,6 +32,9 @@ const TAB_TO_PERIOD: Record<string, AstrologyPeriodKey> = {
   year: "yearly",
 };
 
+type AnalysisSectionKey = "holistic" | "astrology" | "saju";
+const ANALYSIS_UNLOCK_ORDER: AnalysisSectionKey[] = ["holistic", "astrology", "saju"];
+
 export default function CosmicFivePage() {
   const [view, setView] = useState<"input" | "loading" | "result">("input");
   const [activeTab, setActiveTab] = useState("today");
@@ -41,6 +45,11 @@ export default function CosmicFivePage() {
   const [styleResultCache, setStyleResultCache] = useState<Record<string, SynthesisOutput>>({});
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleError, setStyleError] = useState<string | null>(null);
+  const [unlockedSections, setUnlockedSections] = useState<Record<AnalysisSectionKey, boolean>>({
+    holistic: false,
+    astrology: false,
+    saju: false,
+  });
   const isSubmitting = view === "loading";
   const astrologyCalculator = new AstrologyCalculator();
   const sajuCalculator = new SajuCalculator();
@@ -69,6 +78,7 @@ export default function CosmicFivePage() {
       setSelectedStyle(birthInfo.toneStyle);
       setStyleResultCache({});
       setStyleError(null);
+      setUnlockedSections({ holistic: false, astrology: false, saju: false });
       setView("result");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -81,6 +91,19 @@ export default function CosmicFivePage() {
   const handleRegenerate = () => {
     if (lastBirthInfo) void handleSubmit(lastBirthInfo);
   };
+
+  const unlockSection = useCallback((key: AnalysisSectionKey) => {
+    setUnlockedSections((prev) => {
+      const idx = ANALYSIS_UNLOCK_ORDER.indexOf(key);
+      const requiredPrev = idx > 0 ? ANALYSIS_UNLOCK_ORDER[idx - 1] : null;
+      if (requiredPrev && !prev[requiredPrev]) return prev;
+      return { ...prev, [key]: true };
+    });
+  }, []);
+
+  const unlockAllSections = useCallback(() => {
+    setUnlockedSections({ holistic: true, astrology: true, saju: true });
+  }, []);
 
   const period = TAB_TO_PERIOD[activeTab] ?? "daily";
   const slice = useMemo(() => {
@@ -211,6 +234,17 @@ export default function CosmicFivePage() {
         {view === "result" && resultViewModel && slice && (
           <div className="space-y-8 animate-in fade-in duration-500">
             <ResultTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            <button
+              type="button"
+              onClick={unlockAllSections}
+              className={cn(
+                "w-full h-[44px] rounded-xl text-sm font-medium",
+                "bg-secondary border border-glass-border text-text-secondary",
+                "hover:bg-glass-bg hover:text-text-primary hover:border-glass-border-hover transition-all duration-200"
+              )}
+            >
+              전체 분석 한 번에 열기
+            </button>
 
             {/* Hero: main message */}
             <section className="space-y-4">
@@ -243,82 +277,93 @@ export default function CosmicFivePage() {
               <MetadataTags tags={resultViewModel.metadataTags} />
             </section>
 
-            {/* Main interpretation */}
-            <section className="space-y-4">
-              <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wider">통합 해석</h2>
-              <IntegratedInsightCard
-                data={
-                  integratedDisplay ?? {
-                    commonTheme: resultViewModel.styleReadyText.integratedTheme,
-                    cautionSignal: resultViewModel.styleReadyText.cautionSignal,
-                    dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
-                    lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
+            <AnalysisUnlockCard
+              title="통합 해석"
+              description="핵심 메시지, 생활 영역별 흐름, 그리고 오늘의 실천 가이드를 확인합니다."
+              isUnlocked={unlockedSections.holistic}
+              onUnlock={() => unlockSection("holistic")}
+              canUnlock={true}
+            >
+              <section className="space-y-4">
+                <IntegratedInsightCard
+                  data={
+                    integratedDisplay ?? {
+                      commonTheme: resultViewModel.styleReadyText.integratedTheme,
+                      cautionSignal: resultViewModel.styleReadyText.cautionSignal,
+                      dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
+                      lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
+                    }
                   }
-                }
-              />
-            </section>
+                />
+                <DomainCards cards={slice.domainCards} />
+                <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
+                <MicroActionCard actions={resultViewModel.microActions} />
+              </section>
+            </AnalysisUnlockCard>
 
-            {/* Chart detail: astrology + saju */}
-            <section className="space-y-6">
-              <AstrologyCard
-              data={{
-                sunSign: resultViewModel.astrology.sunSign,
-                moonSign: resultViewModel.astrology.moonSign,
-                risingSign: resultViewModel.astrology.risingSign,
-                planets: resultViewModel.astrology.planets,
-                insights: resultViewModel.astrology.byPeriod[period]?.interpretationFacts
-                  ? [
-                      resultViewModel.astrology.byPeriod[period]!.interpretationFacts.energy,
-                      `연애: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.loveStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.loveScore}/5)`,
-                      `커리어: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.careerStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.careerScore}/5)`,
-                      `재물: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.moneyStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.moneyScore}/5)`,
-                      `건강: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.healthStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.healthScore}/5, ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.bodyPart})`,
-                      `행운 색: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyColor}, 숫자: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyNumber}, 시간대: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyTime}`,
-                    ]
-                  : ["오늘의 흐름을 편하게 받아들이세요."],
-                personality: resultViewModel.astrology.byPeriod[period]?.personality,
-                strengths: resultViewModel.astrology.byPeriod[period]?.strengths,
-                cautions: resultViewModel.astrology.byPeriod[period]?.cautions,
-              }}
-            />
+            <AnalysisUnlockCard
+              title="Astrology 분석"
+              description="별자리 기반 성향, 행성 정보, 기간별 흐름과 관계/커리어/재물/건강 포인트를 확인합니다."
+              isUnlocked={unlockedSections.astrology}
+              onUnlock={() => unlockSection("astrology")}
+              canUnlock={unlockedSections.holistic}
+              lockHint="먼저 통합 해석을 열어 주세요."
+            >
+              <section className="space-y-4">
+                <AstrologyCard
+                  data={{
+                    sunSign: resultViewModel.astrology.sunSign,
+                    moonSign: resultViewModel.astrology.moonSign,
+                    risingSign: resultViewModel.astrology.risingSign,
+                    planets: resultViewModel.astrology.planets,
+                    insights: resultViewModel.astrology.byPeriod[period]?.interpretationFacts
+                      ? [
+                          resultViewModel.astrology.byPeriod[period]!.interpretationFacts.energy,
+                          `연애: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.loveStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.loveScore}/5)`,
+                          `커리어: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.careerStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.careerScore}/5)`,
+                          `재물: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.moneyStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.moneyScore}/5)`,
+                          `건강: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.healthStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.healthScore}/5, ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.bodyPart})`,
+                          `행운 색: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyColor}, 숫자: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyNumber}, 시간대: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyTime}`,
+                        ]
+                      : ["오늘의 흐름을 편하게 받아들이세요."],
+                    personality: resultViewModel.astrology.byPeriod[period]?.personality,
+                    strengths: resultViewModel.astrology.byPeriod[period]?.strengths,
+                    cautions: resultViewModel.astrology.byPeriod[period]?.cautions,
+                  }}
+                />
+              </section>
+            </AnalysisUnlockCard>
 
-            <SajuCard
-              data={{
-                pillars: resultViewModel.saju.rawCalculation.pillars,
-                dayMaster: resultViewModel.saju.rawCalculation.dayMaster,
-                strengths: [
-                  `당신의 일간은 ${resultViewModel.saju.rawCalculation.ilgan}으로, ${resultViewModel.saju.interpretationFacts.dayMasterPersonality}`,
-                  `장점: ${resultViewModel.saju.interpretationFacts.dayMasterStrengths}`,
-                ],
-                cautions: [`주의 포인트: ${resultViewModel.saju.interpretationFacts.dayMasterCautions}`],
-                internalBalanceSummary: resultViewModel.saju.interpretationFacts.internalBalanceSummary,
-                practicalAdvice: resultViewModel.saju.interpretationFacts.practicalAdvice,
-              }}
-            />
-
-            <FiveElementsChart data={resultViewModel.fiveElements} />
-            </section>
-
-            {/* Domain cards */}
-            <section>
-              <DomainCards cards={slice.domainCards} />
-            </section>
-
-            {/* Why this reading */}
-            <section>
-              <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
-            </section>
-
-            {/* Advice & takeaway */}
-            <section>
-              <MicroActionCard actions={resultViewModel.microActions} />
-            </section>
-
-            {!lastBirthInfo?.birthTime && (
-              <p className="text-xs text-text-muted text-center">
-                출생시간을 입력하면 일간·사주가 더 정확히 반영됩니다.
-              </p>
-            )}
+            <AnalysisUnlockCard
+              title="Saju 분석"
+              description="사주 일간, 오행 분포, 균형 상태와 실천 조언을 확인합니다."
+              isUnlocked={unlockedSections.saju}
+              onUnlock={() => unlockSection("saju")}
+              canUnlock={unlockedSections.astrology}
+              lockHint="먼저 Astrology 분석을 열어 주세요."
+            >
+              <section className="space-y-4">
+                <SajuCard
+                  data={{
+                    pillars: resultViewModel.saju.rawCalculation.pillars,
+                    dayMaster: resultViewModel.saju.rawCalculation.dayMaster,
+                    strengths: [
+                      `당신의 일간은 ${resultViewModel.saju.rawCalculation.ilgan}으로, ${resultViewModel.saju.interpretationFacts.dayMasterPersonality}`,
+                      `장점: ${resultViewModel.saju.interpretationFacts.dayMasterStrengths}`,
+                    ],
+                    cautions: [`주의 포인트: ${resultViewModel.saju.interpretationFacts.dayMasterCautions}`],
+                    internalBalanceSummary: resultViewModel.saju.interpretationFacts.internalBalanceSummary,
+                    practicalAdvice: resultViewModel.saju.interpretationFacts.practicalAdvice,
+                  }}
+                />
+                <FiveElementsChart data={resultViewModel.fiveElements} />
+                {!lastBirthInfo?.birthTime && (
+                  <p className="text-xs text-text-muted text-center">
+                    출생시간을 입력하면 일간·사주가 더 정확히 반영됩니다.
+                  </p>
+                )}
+              </section>
+            </AnalysisUnlockCard>
 
             <button
               onClick={handleRegenerate}
@@ -338,5 +383,65 @@ export default function CosmicFivePage() {
         </footer>
       </div>
     </div>
+  );
+}
+
+function AnalysisUnlockCard({
+  title,
+  description,
+  isUnlocked,
+  onUnlock,
+  canUnlock,
+  lockHint,
+  children,
+}: {
+  title: string;
+  description: string;
+  isUnlocked: boolean;
+  onUnlock: () => void;
+  canUnlock: boolean;
+  lockHint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <GlassCard>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <h2 className="text-base font-medium text-text-primary">{title}</h2>
+          <p className="text-sm text-text-secondary mt-1">{description}</p>
+        </div>
+        <span
+          className={cn(
+            "text-xs px-2 py-1 rounded-full border",
+            isUnlocked
+              ? "bg-accent-teal/10 border-accent-teal/30 text-accent-teal"
+              : "bg-secondary/60 border-glass-border text-text-muted"
+          )}
+        >
+          {isUnlocked ? "열림" : "잠김"}
+        </span>
+      </div>
+
+      {!isUnlocked ? (
+        <button
+          type="button"
+          disabled={!canUnlock}
+          onClick={onUnlock}
+          className={cn(
+            "w-full h-[44px] rounded-xl text-sm font-medium",
+            "bg-secondary border border-glass-border text-text-primary",
+            "hover:bg-glass-bg hover:border-glass-border-hover transition-all duration-200",
+            !canUnlock && "opacity-50 cursor-not-allowed hover:bg-secondary hover:border-glass-border"
+          )}
+        >
+          {canUnlock ? "분석 열기" : "이전 분석을 먼저 열어 주세요"}
+        </button>
+      ) : (
+        <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">{children}</div>
+      )}
+      {!isUnlocked && !canUnlock && lockHint && (
+        <p className="text-xs text-text-muted mt-2">{lockHint}</p>
+      )}
+    </GlassCard>
   );
 }
