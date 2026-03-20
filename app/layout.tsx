@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cosmic 五",
+  title: "Cosmic 5",
   description: "별과 오행이 읽어주는 오늘의 방향",
   icons: {
     icon: "/cosmic5-logo.png",

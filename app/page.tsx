@@ -213,21 +213,15 @@ export default function CosmicFivePage() {
               ← 뒤로
             </button>
           )}
-          <div className="flex flex-col items-center gap-3 mb-2">
+          <div className="flex justify-center mb-2">
             <Image
               src="/cosmic5-logo.png"
               alt="Cosmic 5"
-              width={240}
-              height={72}
-              className="h-14 w-auto max-w-[min(100%,280px)] object-contain object-center"
+              width={320}
+              height={96}
+              className="h-20 sm:h-24 w-auto max-w-[min(100%,360px)] object-contain object-center"
               priority
             />
-            <h1
-              className="text-3xl font-light tracking-tight text-text-primary"
-              style={{ fontFamily: "var(--font-cormorant), serif" }}
-            >
-              Cosmic 五
-            </h1>
           </div>
           <p className="text-sm text-text-secondary">별과 오행이 읽어주는 오늘의 방향</p>
         </header>
@@ -393,7 +387,7 @@ export default function CosmicFivePage() {
         )}
 
         <footer className="mt-12 text-center">
-          <p className="text-xs text-text-muted">✦ Cosmic 五 · 별과 오행의 조화</p>
+          <p className="text-xs text-text-muted">✦ 별과 오행의 조화</p>
         </footer>
       </div>
     </div>
