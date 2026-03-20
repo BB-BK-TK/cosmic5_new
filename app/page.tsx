@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, type ReactNode } from "react";
+import Image from "next/image";
 import { StarBackground } from "@/components/star-background";
 import { BirthInfoForm, type BirthInfo } from "@/components/birth-info-form";
 import { ResultTabs } from "@/components/result-tabs";
@@ -212,9 +213,22 @@ export default function CosmicFivePage() {
               ← 뒤로
             </button>
           )}
-          <h1 className="text-3xl font-light tracking-tight text-text-primary mb-2" style={{ fontFamily: "var(--font-cormorant), serif" }}>
-            Cosmic 五
-          </h1>
+          <div className="flex flex-col items-center gap-3 mb-2">
+            <Image
+              src="/cosmic5-logo.png"
+              alt="Cosmic 5"
+              width={240}
+              height={72}
+              className="h-14 w-auto max-w-[min(100%,280px)] object-contain object-center"
+              priority
+            />
+            <h1
+              className="text-3xl font-light tracking-tight text-text-primary"
+              style={{ fontFamily: "var(--font-cormorant), serif" }}
+            >
+              Cosmic 五
+            </h1>
+          </div>
           <p className="text-sm text-text-secondary">별과 오행이 읽어주는 오늘의 방향</p>
         </header>
 

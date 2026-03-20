@@ -20,6 +20,9 @@
 # production
 /build
 
+# local nested copies / experiments (keep Cosmic 5 repo clean)
+cosmic5_new/
+
 # misc
 .DS_Store
 *.pem
