@@ -18,10 +18,12 @@ export function WhyThisResult({ basedOn, sections, className }: WhyThisResultPro
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left flex items-center justify-between gap-2 py-2"
+        className="flex w-full items-center justify-between gap-2 py-2 text-left"
       >
-        <span className="text-sm font-medium text-text-primary">이 해석의 근거</span>
-        <span className="text-text-muted text-lg leading-none">{expanded ? "−" : "+"}</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+          이 해석의 근거
+        </span>
+        <span className="text-lg leading-none text-accent-purple">{expanded ? "−" : "+"}</span>
       </button>
       {expanded && (
         <div className="pt-4 space-y-4 border-t border-glass-border mt-2">

@@ -110,7 +110,7 @@ export function MicroActionCard({ actions }: MicroActionCardProps) {
             className="h-full rounded-full transition-all duration-500 ease-out"
             style={{
               width: `${percentage}%`,
-              background: "linear-gradient(90deg, #8B7FD4, #5DBDBD)",
+              background: "linear-gradient(90deg, var(--accent-purple), var(--accent-teal))",
             }}
           />
         </div>

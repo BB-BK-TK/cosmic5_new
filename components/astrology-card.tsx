@@ -1,7 +1,7 @@
 "use client";
 
 import { GlassCard } from "./glass-card";
-import { cn } from "@/lib/utils";
+import { PlanetaryAlignment } from "@/components/planetary-alignment";
 
 interface AstrologyData {
   sunSign: string;
@@ -27,12 +27,11 @@ interface AstrologyCardProps {
 export function AstrologyCard({ data }: AstrologyCardProps) {
   return (
     <GlassCard badge={{ label: "Astrology", variant: "purple" }}>
-      {/* Big Three */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <SignCard symbol="☉" label="Sun" sign={data.sunSign} />
-        <SignCard symbol="☽" label="Moon" sign={data.moonSign} />
-        <SignCard symbol="↑" label="Rising" sign={data.risingSign} />
-      </div>
+      <PlanetaryAlignment
+        sunSign={data.sunSign}
+        moonSign={data.moonSign}
+        risingSign={data.risingSign}
+      />
 
       {/* Planets — Phase 1: hide section when empty; show list when we have data (e.g. Sun). */}
       {data.planets && data.planets.length > 0 ? (
@@ -112,28 +111,5 @@ export function AstrologyCard({ data }: AstrologyCardProps) {
         ))}
       </div>
     </GlassCard>
-  );
-}
-
-function SignCard({
-  symbol,
-  label,
-  sign,
-}: {
-  symbol: string;
-  label: string;
-  sign: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center p-4 rounded-xl",
-        "bg-secondary/50"
-      )}
-    >
-      <span className="text-2xl text-accent-gold mb-2">{symbol}</span>
-      <span className="text-base text-text-primary mb-1">{sign}</span>
-      <span className="text-xs text-text-muted">{label}</span>
-    </div>
   );
 }

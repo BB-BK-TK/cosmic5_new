@@ -1,31 +1,33 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, type ReactNode } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { StarBackground } from "@/components/star-background";
+import { CosmicAmbient } from "@/components/cosmic-ambient";
 import { BirthInfoForm, type BirthInfo } from "@/components/birth-info-form";
 import { LoadingScreen } from "@/components/loading-screen";
-import { HeroSummary, DomainCards, WhyThisResult, MetadataTags } from "@/components/result";
+import { HeroSummary, WhyThisResult } from "@/components/result";
 import { AstrologyCard } from "@/components/astrology-card";
 import { SajuCard } from "@/components/saju-card";
 import { FiveElementsChart } from "@/components/five-elements-chart";
 import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
+import { AnalysisTabNav } from "@/components/analysis-tab-nav";
+import { DecisionCriteria } from "@/components/decision-criteria";
+import { UnifiedDomainCards } from "@/components/unified-domain-cards";
 import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
 import { getStylePresets, ACTIVE_FORTUNE_PERIOD } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { GlassCard } from "@/components/glass-card";
 import { SajuCalculator } from "@/lib/saju-db";
 import { AstrologyCalculator } from "@/lib/astrology-db";
 import { runCalculations } from "@/lib/calculation-layer";
 import { runInterpretation } from "@/lib/interpretation-layer";
 import { buildResultViewModel, getViewModelSliceForPeriod } from "@/lib/presentation-layer";
+import { buildDecisionCriteria } from "@/lib/decision-criteria";
+import { buildUnifiedDomains } from "@/lib/unified-domains";
 import type { ResultViewModel } from "@/types/result-schema";
 import type { SynthesisOutput } from "@/types/ai-types";
 import type { ReadingStyleKey } from "@/types/ai-types";
-
-type AnalysisSectionKey = "holistic" | "astrology" | "saju";
-const ANALYSIS_UNLOCK_ORDER: AnalysisSectionKey[] = ["holistic", "astrology", "saju"];
 
 export default function CosmicFivePage() {
   const [view, setView] = useState<"input" | "loading" | "result">("input");
@@ -36,11 +38,7 @@ export default function CosmicFivePage() {
   const [styleResultCache, setStyleResultCache] = useState<Record<string, SynthesisOutput>>({});
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleError, setStyleError] = useState<string | null>(null);
-  const [unlockedSections, setUnlockedSections] = useState<Record<AnalysisSectionKey, boolean>>({
-    holistic: false,
-    astrology: false,
-    saju: false,
-  });
+  const [activeTab, setActiveTab] = useState(0);
   const isSubmitting = view === "loading";
   const astrologyCalculator = new AstrologyCalculator();
   const sajuCalculator = new SajuCalculator();
@@ -50,16 +48,13 @@ export default function CosmicFivePage() {
     setView("loading");
     setErrorMessage(null);
     try {
-      // Layer 1: Calculation only
       const calculation = runCalculations(
         birthInfo.birthDate,
         birthInfo.birthTime || "12:00",
         astrologyCalculator,
         sajuCalculator
       );
-      // Layer 2: Interpretation
       const interpretation = runInterpretation(calculation);
-      // Layer 3: Presentation / view-model
       const viewModel = buildResultViewModel(calculation, interpretation, {
         birthDate: birthInfo.birthDate,
         birthTime: birthInfo.birthTime,
@@ -69,7 +64,7 @@ export default function CosmicFivePage() {
       setSelectedStyle(birthInfo.toneStyle);
       setStyleResultCache({});
       setStyleError(null);
-      setUnlockedSections({ holistic: false, astrology: false, saju: false });
+      setActiveTab(0);
       setView("result");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -82,19 +77,6 @@ export default function CosmicFivePage() {
   const handleRegenerate = () => {
     if (lastBirthInfo) void handleSubmit(lastBirthInfo);
   };
-
-  const unlockSection = useCallback((key: AnalysisSectionKey) => {
-    setUnlockedSections((prev) => {
-      const idx = ANALYSIS_UNLOCK_ORDER.indexOf(key);
-      const requiredPrev = idx > 0 ? ANALYSIS_UNLOCK_ORDER[idx - 1] : null;
-      if (requiredPrev && !prev[requiredPrev]) return prev;
-      return { ...prev, [key]: true };
-    });
-  }, []);
-
-  const unlockAllSections = useCallback(() => {
-    setUnlockedSections({ holistic: true, astrology: true, saju: true });
-  }, []);
 
   const period = ACTIVE_FORTUNE_PERIOD;
   const slice = useMemo(() => {
@@ -171,6 +153,8 @@ export default function CosmicFivePage() {
     return slice.heroSummary;
   }, [slice, displayStyleResult]);
 
+  const energyHighlight = resultViewModel?.astrology.byPeriod[period]?.interpretationFacts?.energy;
+
   const integratedDisplay = useMemo(() => {
     if (!resultViewModel) return null;
     const base = {
@@ -178,6 +162,7 @@ export default function CosmicFivePage() {
       cautionSignal: resultViewModel.styleReadyText.cautionSignal,
       dailyGuideline: resultViewModel.styleReadyText.dailyGuideline,
       lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
+      integratedStrength: resultViewModel.saju.interpretationFacts.dayMasterStrengths,
     };
     if (displayStyleResult) {
       return {
@@ -185,31 +170,48 @@ export default function CosmicFivePage() {
         cautionSignal: displayStyleResult.cautionSignal,
         dailyGuideline: displayStyleResult.dailyGuideline,
         lifetimeTheme: displayStyleResult.lifetimeTheme ?? base.lifetimeTheme,
+        integratedStrength: base.integratedStrength,
       };
     }
     return base;
   }, [resultViewModel, displayStyleResult]);
 
+  const decisionItems = useMemo(() => {
+    if (!integratedDisplay) return [];
+    return buildDecisionCriteria({
+      dailyGuideline: integratedDisplay.dailyGuideline,
+      cautionSignal: integratedDisplay.cautionSignal,
+      commonTheme: integratedDisplay.commonTheme,
+    });
+  }, [integratedDisplay]);
+
+  const unifiedDomains = useMemo(() => {
+    if (!resultViewModel) return [];
+    return buildUnifiedDomains(resultViewModel, period);
+  }, [resultViewModel, period]);
+
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="relative min-h-screen bg-background">
+      <CosmicAmbient />
       <StarBackground />
-      <div className="relative z-10 max-w-[480px] mx-auto px-5 py-8">
-        <header className="text-center mb-8">
+      <div className="relative z-10 mx-auto max-w-[480px] px-5 py-8">
+        <header className="mb-8 text-center">
           {view === "result" && (
             <button
+              type="button"
               onClick={handleBack}
-              className="absolute left-5 top-8 text-text-muted hover:text-text-secondary transition-colors"
+              className="absolute left-5 top-8 text-text-muted transition-colors hover:text-text-secondary"
             >
               ← 뒤로
             </button>
           )}
-          <div className="flex justify-center mb-2">
+          <div className="mb-2 flex justify-center">
             <Image
               src="/cosmic5-logo.png"
               alt="Cosmic 5"
               width={320}
               height={96}
-              className="h-20 sm:h-24 w-auto max-w-[min(100%,360px)] object-contain object-center"
+              className="h-20 w-auto max-w-[min(100%,360px)] object-contain object-center sm:h-24"
               priority
             />
           </div>
@@ -219,7 +221,11 @@ export default function CosmicFivePage() {
         {view === "input" && (
           <div className="space-y-4">
             {errorMessage && (
-              <div className={cn("px-4 py-3 rounded-xl text-sm", "bg-caution/10 border border-caution/20 text-text-secondary")}>
+              <div
+                className={cn(
+                  "rounded-xl border border-caution/20 bg-caution/10 px-4 py-3 text-sm text-text-secondary"
+                )}
+              >
                 {errorMessage}
               </div>
             )}
@@ -230,61 +236,42 @@ export default function CosmicFivePage() {
         {view === "loading" && <LoadingScreen />}
 
         {view === "result" && resultViewModel && slice && (
-          <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="mb-6 pb-3 border-b border-glass-border">
-              <p className="text-center text-sm font-medium text-text-primary tracking-wide">오늘의 운세</p>
+          <div className="animate-in fade-in space-y-6 duration-500">
+            <div className="mb-2 border-b border-glass-border pb-3">
+              <p className="text-center text-sm font-medium tracking-wide text-text-primary">오늘의 운세</p>
             </div>
-            <button
-              type="button"
-              onClick={unlockAllSections}
-              className={cn(
-                "w-full h-[44px] rounded-xl text-sm font-medium",
-                "bg-secondary border border-glass-border text-text-secondary",
-                "hover:bg-glass-bg hover:text-text-primary hover:border-glass-border-hover transition-all duration-200"
-              )}
-            >
-              전체 분석 한 번에 열기
-            </button>
 
-            {/* Hero: main message */}
-            <section className="space-y-4">
-              {styleError && (
-                <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-caution/10 border border-caution/20 text-sm text-text-secondary">
-                  <span>{styleError}</span>
-                  <button
-                    type="button"
-                    onClick={handleStyleRetry}
-                    className="text-accent-purple hover:underline whitespace-nowrap font-medium"
-                  >
-                    다시 시도
-                  </button>
-                </div>
-              )}
-              {styleLoading && selectedStyle !== NO_STYLE_KEY && (
-                <p className="text-sm text-text-muted text-center">선택한 표현 스타일로 변환 중입니다.</p>
-              )}
-              <HeroSummary data={heroDisplay ?? slice.heroSummary} />
-            </section>
+            <AnalysisTabNav activeIndex={activeTab} onChange={setActiveTab} />
 
-            {/* Identity & chart snapshot */}
-            <section className="space-y-3">
-              <p className="text-xs text-text-muted text-center">
-                {resultViewModel.astrology.sunSign} · 일간 {resultViewModel.saju.rawCalculation.ilgan} · {resultViewModel.metadataTags.find(t => t.label === "기간")?.value ?? "오늘"}
+            {styleError && (
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-caution/20 bg-caution/10 px-4 py-3 text-sm text-text-secondary">
+                <span>{styleError}</span>
+                <button
+                  type="button"
+                  onClick={handleStyleRetry}
+                  className="whitespace-nowrap font-medium text-accent-purple hover:underline"
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
+            {styleLoading && selectedStyle !== NO_STYLE_KEY && (
+              <p className="text-center text-sm text-text-muted">선택한 표현 스타일로 변환 중입니다.</p>
+            )}
+
+            {/* Tab: 통합 해석 */}
+            {activeTab === 0 && (
+              <section className="space-y-6">
+                <HeroSummary
+                  data={heroDisplay ?? slice.heroSummary}
+                  highlightSegment={energyHighlight}
+                  tags={resultViewModel.metadataTags}
+                />
                 {selectedStyle !== NO_STYLE_KEY && (
-                  <> · 표현 스타일: {getStylePresets().find(p => p.value === selectedStyle)?.label ?? selectedStyle}</>
+                  <p className="text-center text-xs text-text-muted">
+                    표현 스타일: {getStylePresets().find((p) => p.value === selectedStyle)?.label ?? selectedStyle}
+                  </p>
                 )}
-              </p>
-              <MetadataTags tags={resultViewModel.metadataTags} />
-            </section>
-
-            <AnalysisUnlockCard
-              title="통합 해석"
-              description="핵심 메시지, 생활 영역별 흐름, 그리고 오늘의 실천 가이드를 확인합니다."
-              isUnlocked={unlockedSections.holistic}
-              onUnlock={() => unlockSection("holistic")}
-              canUnlock={true}
-            >
-              <section className="space-y-4">
                 <IntegratedInsightCard
                   data={
                     integratedDisplay ?? {
@@ -295,20 +282,15 @@ export default function CosmicFivePage() {
                     }
                   }
                 />
-                <DomainCards cards={slice.domainCards} />
+                <DecisionCriteria items={decisionItems} />
+                <UnifiedDomainCards domains={unifiedDomains} />
                 <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
                 <MicroActionCard actions={resultViewModel.microActions} />
               </section>
-            </AnalysisUnlockCard>
+            )}
 
-            <AnalysisUnlockCard
-              title="Astrology 분석"
-              description="별자리 기반 성향, 행성 정보, 기간별 흐름과 관계/커리어/재물/건강 포인트를 확인합니다."
-              isUnlocked={unlockedSections.astrology}
-              onUnlock={() => unlockSection("astrology")}
-              canUnlock={unlockedSections.holistic}
-              lockHint="먼저 통합 해석을 열어 주세요."
-            >
+            {/* Tab: 별자리 */}
+            {activeTab === 1 && (
               <section className="space-y-4">
                 <AstrologyCard
                   data={{
@@ -332,16 +314,10 @@ export default function CosmicFivePage() {
                   }}
                 />
               </section>
-            </AnalysisUnlockCard>
+            )}
 
-            <AnalysisUnlockCard
-              title="Saju 분석"
-              description="사주 일간, 오행 분포, 균형 상태와 실천 조언을 확인합니다."
-              isUnlocked={unlockedSections.saju}
-              onUnlock={() => unlockSection("saju")}
-              canUnlock={unlockedSections.astrology}
-              lockHint="먼저 Astrology 분석을 열어 주세요."
-            >
+            {/* Tab: 사주 */}
+            {activeTab === 2 && (
               <section className="space-y-4">
                 <SajuCard
                   data={{
@@ -358,19 +334,19 @@ export default function CosmicFivePage() {
                 />
                 <FiveElementsChart data={resultViewModel.fiveElements} />
                 {!lastBirthInfo?.birthTime && (
-                  <p className="text-xs text-text-muted text-center">
+                  <p className="text-center text-xs text-text-muted">
                     출생시간을 입력하면 일간·사주가 더 정확히 반영됩니다.
                   </p>
                 )}
               </section>
-            </AnalysisUnlockCard>
+            )}
 
             <button
+              type="button"
               onClick={handleRegenerate}
               className={cn(
-                "w-full h-[52px] rounded-xl font-medium text-sm",
-                "bg-transparent border border-glass-border text-text-secondary",
-                "transition-all duration-200 hover:bg-glass-bg hover:border-glass-border-hover flex items-center justify-center gap-2"
+                "flex h-[52px] w-full items-center justify-center gap-2 rounded-xl border border-glass-border bg-transparent text-sm font-medium text-text-secondary",
+                "transition-all duration-200 hover:border-glass-border-hover hover:bg-glass-bg"
               )}
             >
               <span>↻</span> 다시 보기
@@ -383,65 +359,5 @@ export default function CosmicFivePage() {
         </footer>
       </div>
     </div>
-  );
-}
-
-function AnalysisUnlockCard({
-  title,
-  description,
-  isUnlocked,
-  onUnlock,
-  canUnlock,
-  lockHint,
-  children,
-}: {
-  title: string;
-  description: string;
-  isUnlocked: boolean;
-  onUnlock: () => void;
-  canUnlock: boolean;
-  lockHint?: string;
-  children: ReactNode;
-}) {
-  return (
-    <GlassCard>
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <h2 className="text-base font-medium text-text-primary">{title}</h2>
-          <p className="text-sm text-text-secondary mt-1">{description}</p>
-        </div>
-        <span
-          className={cn(
-            "text-xs px-2 py-1 rounded-full border",
-            isUnlocked
-              ? "bg-accent-teal/10 border-accent-teal/30 text-accent-teal"
-              : "bg-secondary/60 border-glass-border text-text-muted"
-          )}
-        >
-          {isUnlocked ? "열림" : "잠김"}
-        </span>
-      </div>
-
-      {!isUnlocked ? (
-        <button
-          type="button"
-          disabled={!canUnlock}
-          onClick={onUnlock}
-          className={cn(
-            "w-full h-[44px] rounded-xl text-sm font-medium",
-            "bg-secondary border border-glass-border text-text-primary",
-            "hover:bg-glass-bg hover:border-glass-border-hover transition-all duration-200",
-            !canUnlock && "opacity-50 cursor-not-allowed hover:bg-secondary hover:border-glass-border"
-          )}
-        >
-          {canUnlock ? "분석 열기" : "이전 분석을 먼저 열어 주세요"}
-        </button>
-      ) : (
-        <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">{children}</div>
-      )}
-      {!isUnlocked && !canUnlock && lockHint && (
-        <p className="text-xs text-text-muted mt-2">{lockHint}</p>
-      )}
-    </GlassCard>
   );
 }

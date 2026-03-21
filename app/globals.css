@@ -4,32 +4,39 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Cosmic 五 Design System */
-  --background: #0A0A14;
-  --foreground: #F0EEF6;
-  --card: #12121F;
-  --card-foreground: #F0EEF6;
-  --popover: #12121F;
-  --popover-foreground: #F0EEF6;
-  --primary: #8B7FD4;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1A1A2E;
-  --secondary-foreground: #9896A3;
-  --muted: #1A1A2E;
-  --muted-foreground: #5C5A66;
-  --accent: #5DBDBD;
-  --accent-foreground: #FFFFFF;
-  --destructive: #E57373;
-  --destructive-foreground: #FFFFFF;
+  /* Cosmic 五 Design System — docs/cosmic5-ui-requirements.md */
+  --bg-primary: #0a0814;
+  --background: #0a0814;
+  --foreground: #f0eef6;
+  --card: #12121f;
+  --card-foreground: #f0eef6;
+  --popover: #12121f;
+  --popover-foreground: #f0eef6;
+  --primary: #9b8aff;
+  --primary-foreground: #ffffff;
+  --secondary: #1a1a2e;
+  --secondary-foreground: #9896a3;
+  --muted: #1a1a2e;
+  --muted-foreground: #5c5a66;
+  --accent: #5edcb7;
+  --accent-foreground: #ffffff;
+  --destructive: #e57373;
+  --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.08);
-  --input: #1A1A2E;
-  --ring: #8B7FD4;
+  --input: #1a1a2e;
+  --ring: #9b8aff;
   --radius: 1rem;
-  
+
+  /* Ambient orbs */
+  --orb-purple: rgba(155, 138, 255, 0.45);
+  --orb-teal: rgba(94, 220, 183, 0.35);
+
   /* Accent Colors */
-  --accent-gold: #C9A87C;
-  --accent-purple: #8B7FD4;
-  --accent-teal: #5DBDBD;
+  --accent-gold: #c9a87c;
+  --accent-purple: #9b8aff;
+  --accent-teal: #5edcb7;
+  --accent-coral: #ff8a7a;
+  --accent-amber: #f5c542;
   
   /* Five Elements */
   --element-wood: #6BCB77;
@@ -39,8 +46,9 @@
   --element-water: #64B5F6;
   
   /* Glass Effect */
-  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.14);
   --glass-highlight: rgba(255, 255, 255, 0.12);
   
   /* Text */
@@ -54,8 +62,8 @@
   --negative: #E57373;
   
   /* Chart colors */
-  --chart-1: #8B7FD4;
-  --chart-2: #5DBDBD;
+  --chart-1: #9b8aff;
+  --chart-2: #5edcb7;
   --chart-3: #6BCB77;
   --chart-4: #E57373;
   --chart-5: #DDB892;
@@ -110,6 +118,8 @@
   --color-accent-gold: var(--accent-gold);
   --color-accent-purple: var(--accent-purple);
   --color-accent-teal: var(--accent-teal);
+  --color-accent-coral: var(--accent-coral);
+  --color-accent-amber: var(--accent-amber);
   --color-element-wood: var(--element-wood);
   --color-element-fire: var(--element-fire);
   --color-element-earth: var(--element-earth);
@@ -117,6 +127,7 @@
   --color-element-water: var(--element-water);
   --color-glass-bg: var(--glass-bg);
   --color-glass-border: var(--glass-border);
+  --color-glass-border-hover: var(--glass-border-hover);
   --color-glass-highlight: var(--glass-highlight);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -141,7 +152,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 

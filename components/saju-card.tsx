@@ -36,7 +36,9 @@ export function SajuCard({ data }: SajuCardProps) {
             key={pillar.type}
             className={cn(
               "flex flex-col items-center py-4 px-2 rounded-xl",
-              "bg-secondary/50"
+              "bg-secondary/50",
+              pillar.type === "일주" &&
+                "ring-2 ring-accent-teal/50 border border-accent-teal/30 bg-accent-teal/[0.07]"
             )}
           >
             <span className="text-xs text-text-muted mb-2">{pillar.type}</span>

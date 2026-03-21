@@ -25,7 +25,7 @@ export function GlassCard({ children, className, badge }: GlassCardProps) {
         "relative rounded-[20px] p-6 transition-all duration-300",
         "bg-glass-bg border border-glass-border",
         "backdrop-blur-xl",
-        "hover:border-glass-highlight hover:shadow-[0_0_40px_rgba(139,127,212,0.1)]",
+        "hover:border-glass-highlight hover:shadow-[0_0_40px_rgba(155,138,255,0.12)]",
         className
       )}
     >
