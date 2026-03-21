@@ -13,7 +13,6 @@ import { FiveElementsChart } from "@/components/five-elements-chart";
 import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
 import { AnalysisTabNav } from "@/components/analysis-tab-nav";
-import { DecisionCriteria } from "@/components/decision-criteria";
 import { UnifiedDomainCards } from "@/components/unified-domain-cards";
 import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
 import { getStylePresets, ACTIVE_FORTUNE_PERIOD } from "@/lib/data";
@@ -273,6 +272,7 @@ export default function CosmicFivePage() {
                   </p>
                 )}
                 <IntegratedInsightCard
+                  criteria={decisionItems}
                   data={
                     integratedDisplay ?? {
                       commonTheme: resultViewModel.styleReadyText.integratedTheme,
@@ -282,7 +282,6 @@ export default function CosmicFivePage() {
                     }
                   }
                 />
-                <DecisionCriteria items={decisionItems} />
                 <UnifiedDomainCards domains={unifiedDomains} />
                 <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
                 <MicroActionCard actions={resultViewModel.microActions} />

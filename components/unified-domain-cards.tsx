@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { GlassCard } from "@/components/glass-card";
-import { CosmicScoreBar } from "@/components/ui/cosmic-score-bar";
+import { ScoreStars } from "@/components/ui/score-stars";
 import { CosmicSectionLabel } from "@/components/ui/cosmic-section-label";
 import { cn } from "@/lib/utils";
 import type { UnifiedDomain } from "@/types/unified-domain";
@@ -35,9 +35,8 @@ export function UnifiedDomainCards({ domains, className }: UnifiedDomainCardsPro
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-medium text-text-primary">{d.area}</h3>
-                    <span className="shrink-0 font-mono text-xs text-accent-gold">{d.score}/5</span>
+                    <ScoreStars value={d.score} max={5} />
                   </div>
-                  <CosmicScoreBar value={d.score} className="mt-2" />
                   <p className="mt-2 text-xs text-text-muted line-clamp-2">{d.summary}</p>
                   <p className="mt-1 text-[11px] text-accent-teal/90">✦ {d.luck}</p>
                 </div>
