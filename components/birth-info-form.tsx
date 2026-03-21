@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "./glass-card";
 import { NO_STYLE_KEY } from "@/lib/data";
 import type { StyleOption } from "@/lib/data";
+import { knownCityNames } from "@/lib/birthplace";
 
 interface BirthInfoFormProps {
   onSubmit: (data: BirthInfo) => void;
@@ -109,6 +110,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
     const d = toTwoDigits(today.getDate());
     return `${y}-${m}-${d}`;
   }, []);
+  const cityHints = useMemo(() => knownCityNames(), []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,6 +319,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
             <input
               type="text"
               placeholder="예: 서울, 부산..."
+              list="birthplace-hints"
               value={formData.birthPlace}
               onChange={(e) =>
                 setFormData({ ...formData, birthPlace: e.target.value })
@@ -329,6 +332,14 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                 "transition-all duration-200"
               )}
             />
+            <datalist id="birthplace-hints">
+              {cityHints.map((city) => (
+                <option key={city} value={city} />
+              ))}
+            </datalist>
+            <p className="text-xs text-text-muted mt-2">
+              주요 도시 자동완성(국내/해외 일부) 매칭 시 시간대/경도 보정이 적용됩니다.
+            </p>
           </div>
         </div>
       </GlassCard>

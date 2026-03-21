@@ -17,6 +17,11 @@ export interface DbBirthProfile {
   birth_date: string;
   birth_time?: string | null;
   birth_place?: string | null;
+  birth_lat?: number | null;
+  birth_lon?: number | null;
+  birth_timezone?: string | null;
+  utc_offset_minutes?: number | null;
+  solar_offset_minutes?: number | null;
   created_at: string;
 }
 

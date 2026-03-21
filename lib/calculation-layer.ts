@@ -7,7 +7,7 @@
 import type { AstrologyPeriodKey } from "@/types/result-schema";
 import { AstrologyCalculator } from "./astrology-db";
 import { SajuCalculator } from "./saju-db";
-import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude } from "./birthplace";
+import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude, getUtcOffsetMinutesAt } from "./birthplace";
 
 export interface AstrologyRawPerPeriod {
   signKo: string;
@@ -36,6 +36,15 @@ export interface SajuRawOutput {
 }
 
 export interface CalculationResult {
+  birthContext: {
+    birthDate: string;
+    birthTimeInput: string;
+    birthPlaceInput?: string;
+    resolvedLocation?: { name: string; lat: number; lon: number; timeZone: string };
+    utcOffsetMinutes?: number;
+    solarOffsetMinutes?: number;
+    adjustedHourForSaju: number;
+  };
   astrology: {
     byPeriod: Record<AstrologyPeriodKey, AstrologyRawPerPeriod | null>;
     signKo: string;
@@ -109,9 +118,13 @@ export function runCalculations(
   if (!Number.isFinite(minuteNum)) minuteNum = 0;
 
   const place = resolveBirthLocation(birthPlace);
+  let utcOffsetMinutes: number | undefined;
+  let solarOffsetMinutes: number | undefined;
   if (place) {
-    const offset = solarTimeOffsetMinutesByLongitude(place.lon);
-    const total = hourNum * 60 + minuteNum + offset;
+    const atDate = new Date(year, month - 1, day, hourNum, minuteNum, 0);
+    utcOffsetMinutes = getUtcOffsetMinutesAt(atDate, place.timeZone);
+    solarOffsetMinutes = solarTimeOffsetMinutesByLongitude(place.lon, utcOffsetMinutes);
+    const total = hourNum * 60 + minuteNum + solarOffsetMinutes;
     const normalized = ((total % 1440) + 1440) % 1440;
     hourNum = Math.floor(normalized / 60);
   }
@@ -158,6 +171,15 @@ export function runCalculations(
   const pillars = pillarsDisplay.map((p, i) => ({ ...p, animal: i === 0 ? (zodiacEmoji[saju.띠] || p.animal) : p.animal }));
 
   return {
+    birthContext: {
+      birthDate,
+      birthTimeInput: birthTime || "12:00",
+      birthPlaceInput: birthPlace,
+      resolvedLocation: place ? { name: place.name, lat: place.lat, lon: place.lon, timeZone: place.timeZone } : undefined,
+      utcOffsetMinutes,
+      solarOffsetMinutes,
+      adjustedHourForSaju: hourNum,
+    },
     astrology: {
       byPeriod,
       signKo: sign,

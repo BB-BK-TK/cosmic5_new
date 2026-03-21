@@ -8,7 +8,7 @@ import type { AstrologyPeriodKey, ResultViewModel, HeroSummaryViewModel, DomainC
 import type { CalculationResult } from "./calculation-layer";
 import type { AstrologyInterpreted, SajuInterpreted } from "./interpretation-layer";
 import { ACTIVE_FORTUNE_PERIOD } from "@/lib/data/ui-constants";
-import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude } from "./birthplace";
+import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude, getUtcOffsetMinutesAt } from "./birthplace";
 
 export interface InterpretationResult {
   astrology: Record<AstrologyPeriodKey, AstrologyInterpreted | null>;
@@ -72,7 +72,9 @@ function estimateMoonAndRising(
   let hour = parseBirthHour(birthTime);
   const place = resolveBirthLocation(birthPlace);
   if (hour != null && place) {
-    const shiftHours = solarTimeOffsetMinutesByLongitude(place.lon) / 60;
+    const atDate = parts ? new Date(parts.year, parts.month - 1, parts.day, hour, 0, 0) : new Date();
+    const utcOffsetMinutes = getUtcOffsetMinutesAt(atDate, place.timeZone);
+    const shiftHours = solarTimeOffsetMinutesByLongitude(place.lon, utcOffsetMinutes) / 60;
     hour = ((hour + shiftHours) % 24 + 24) % 24;
   }
   if (!parts) return { moonSign: "정보 부족", risingSign: birthTime ? "정보 부족" : "출생시간 필요" };

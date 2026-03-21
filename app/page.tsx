@@ -73,6 +73,27 @@ export default function CosmicFivePage() {
       setActiveTab(0);
       window.scrollTo({ top: 0, behavior: "auto" });
       setView("result");
+
+      // Persist to DB when server key/config is available.
+      void fetch("/api/readings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          birthInfo: {
+            name: birthInfo.name,
+            calendarType: birthInfo.calendarType,
+            birthDate: birthInfo.birthDate,
+            birthTime: birthInfo.birthTime,
+            birthPlace: birthInfo.birthPlace,
+          },
+          periodKey: ACTIVE_FORTUNE_PERIOD,
+          styleKey: birthInfo.toneStyle || NO_STYLE_KEY,
+          rawPayload: calculation,
+          interpretedPayload: viewModel,
+        }),
+      }).catch(() => {
+        // Do not block UX when persistence is unavailable.
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
       setErrorMessage(msg);
