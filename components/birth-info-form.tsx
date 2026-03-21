@@ -22,15 +22,6 @@ export interface BirthInfo {
   toneStyle: StyleOption;
 }
 
-const interestOptions = [
-  { id: "career_money", label: "커리어/돈" },
-  { id: "love_relationship", label: "연애/관계" },
-  { id: "health", label: "건강" },
-  { id: "family", label: "가족" },
-  { id: "mental", label: "멘탈" },
-  { id: "overall", label: "총운" },
-];
-
 
 const DEFAULT_BIRTH_DATE = "1990-01-01";
 
@@ -119,15 +110,6 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
     return `${y}-${m}-${d}`;
   }, []);
 
-  const toggleInterest = (id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(id)
-        ? prev.interests.filter((i) => i !== id)
-        : [...prev.interests, id],
-    }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -137,7 +119,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <GlassCard>
         <h2 className="text-lg font-medium text-text-primary mb-4">
-          출생 정보
+          기본 정보
         </h2>
         <div className="space-y-4">
           <div>
@@ -351,30 +333,6 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
         </div>
       </GlassCard>
 
-      <GlassCard>
-        <h2 className="text-lg font-medium text-text-primary mb-4">
-          관심 영역
-        </h2>
-        <div className="grid grid-cols-2 gap-2">
-          {interestOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => toggleInterest(option.id)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm transition-all duration-200",
-                "border",
-                formData.interests.includes(option.id)
-                  ? "bg-accent-purple/15 border-accent-purple text-text-primary"
-                  : "bg-transparent border-glass-border text-text-secondary hover:border-glass-highlight"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </GlassCard>
-
       <button
         type="submit"
         disabled={!formData.birthDate || isLoading}
@@ -409,7 +367,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
             birthDate: "1995-03-15",
             birthTime: "14:30",
             birthPlace: "서울",
-            interests: ["career_money", "love_relationship"],
+            interests: [],
             toneStyle: NO_STYLE_KEY,
           })
         }

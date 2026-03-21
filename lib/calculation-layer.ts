@@ -7,6 +7,7 @@
 import type { AstrologyPeriodKey } from "@/types/result-schema";
 import { AstrologyCalculator } from "./astrology-db";
 import { SajuCalculator } from "./saju-db";
+import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude } from "./birthplace";
 
 export interface AstrologyRawPerPeriod {
   signKo: string;
@@ -91,6 +92,7 @@ function mapEngineReadingToRaw(
 export function runCalculations(
   birthDate: string,
   birthTime: string,
+  birthPlace: string | undefined,
   astrologyCalc: AstrologyCalculator,
   sajuCalc: SajuCalculator
 ): CalculationResult {
@@ -100,8 +102,19 @@ export function runCalculations(
   const day = Number(dStr);
   const birthDateObj = new Date(year, month - 1, day);
   const now = new Date();
-  const hourStr = (birthTime || "12:00").split(":")[0];
-  const hourNum = Number(hourStr) || 12;
+  const [hourStr, minuteStr] = (birthTime || "12:00").split(":");
+  let hourNum = Number(hourStr);
+  let minuteNum = Number(minuteStr ?? "0");
+  if (!Number.isFinite(hourNum)) hourNum = 12;
+  if (!Number.isFinite(minuteNum)) minuteNum = 0;
+
+  const place = resolveBirthLocation(birthPlace);
+  if (place) {
+    const offset = solarTimeOffsetMinutesByLongitude(place.lon);
+    const total = hourNum * 60 + minuteNum + offset;
+    const normalized = ((total % 1440) + 1440) % 1440;
+    hourNum = Math.floor(normalized / 60);
+  }
 
   const sign = astrologyCalc.getSign(month, day);
   const db = (astrologyCalc as { db?: { signs?: { data?: Record<string, { element?: string; modality?: string; personality?: string }> } } }).db;

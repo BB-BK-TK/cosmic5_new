@@ -53,6 +53,7 @@ export default function CosmicFivePage() {
       const calculation = runCalculations(
         birthInfo.birthDate,
         birthInfo.birthTime || "12:00",
+        birthInfo.birthPlace,
         astrologyCalculator,
         sajuCalculator
       );
@@ -60,6 +61,7 @@ export default function CosmicFivePage() {
       const viewModel = buildResultViewModel(calculation, interpretation, {
         birthDate: birthInfo.birthDate,
         birthTime: birthInfo.birthTime,
+        birthPlace: birthInfo.birthPlace,
         activePeriod: ACTIVE_FORTUNE_PERIOD,
       });
       setResultViewModel(viewModel);

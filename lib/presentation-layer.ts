@@ -8,6 +8,7 @@ import type { AstrologyPeriodKey, ResultViewModel, HeroSummaryViewModel, DomainC
 import type { CalculationResult } from "./calculation-layer";
 import type { AstrologyInterpreted, SajuInterpreted } from "./interpretation-layer";
 import { ACTIVE_FORTUNE_PERIOD } from "@/lib/data/ui-constants";
+import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude } from "./birthplace";
 
 export interface InterpretationResult {
   astrology: Record<AstrologyPeriodKey, AstrologyInterpreted | null>;
@@ -61,13 +62,19 @@ function signByIndex(index: number): string {
 function estimateMoonAndRising(
   sunSignKo: string,
   birthDate: string,
-  birthTime?: string
+  birthTime?: string,
+  birthPlace?: string
 ): { moonSign: string; risingSign: string } {
   const sunIndex = SIGN_ORDER_KO.indexOf(sunSignKo);
   if (sunIndex < 0) return { moonSign: "정보 부족", risingSign: birthTime ? "정보 부족" : "출생시간 필요" };
 
   const parts = parseBirthDateParts(birthDate);
-  const hour = parseBirthHour(birthTime);
+  let hour = parseBirthHour(birthTime);
+  const place = resolveBirthLocation(birthPlace);
+  if (hour != null && place) {
+    const shiftHours = solarTimeOffsetMinutesByLongitude(place.lon) / 60;
+    hour = ((hour + shiftHours) % 24 + 24) % 24;
+  }
   if (!parts) return { moonSign: "정보 부족", risingSign: birthTime ? "정보 부족" : "출생시간 필요" };
 
   const dateObj = new Date(parts.year, parts.month - 1, parts.day);
@@ -108,7 +115,7 @@ function formatDateByTab(period: AstrologyPeriodKey, now: Date): string {
 export function buildResultViewModel(
   calculation: CalculationResult,
   interpretation: InterpretationResult,
-  options: { birthDate: string; birthTime?: string; activePeriod?: AstrologyPeriodKey }
+  options: { birthDate: string; birthTime?: string; birthPlace?: string; activePeriod?: AstrologyPeriodKey }
 ): ResultViewModel {
   const now = new Date();
   const period = (options.activePeriod ?? ACTIVE_FORTUNE_PERIOD) as AstrologyPeriodKey;
@@ -168,6 +175,12 @@ export function buildResultViewModel(
     { label: "별자리", value: calculation.astrology.signKo, source: "astrology" },
     { label: "생년월일", value: options.birthDate, source: "saju" },
   ];
+  if (options.birthTime?.trim()) {
+    metadataTags.push({ label: "출생시간", value: options.birthTime.trim(), source: "saju" });
+  }
+  if (options.birthPlace?.trim()) {
+    metadataTags.push({ label: "출생지", value: options.birthPlace.trim(), source: "saju" });
+  }
   if (dateLabel) metadataTags.push({ label: "날짜", value: dateLabel, source: "astrology" });
 
   const fiveElements = {
@@ -188,7 +201,8 @@ export function buildResultViewModel(
   const estimated = estimateMoonAndRising(
     calculation.astrology.signKo,
     options.birthDate,
-    options.birthTime
+    options.birthTime,
+    options.birthPlace
   );
   if (estimated.moonSign && estimated.moonSign !== "정보 부족") {
     planets.push({ name: "달", symbol: "☽", sign: estimated.moonSign, house: 4 });
