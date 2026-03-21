@@ -9,6 +9,7 @@ import type { CalculationResult } from "./calculation-layer";
 import type { AstrologyInterpreted, SajuInterpreted } from "./interpretation-layer";
 import { ACTIVE_FORTUNE_PERIOD } from "@/lib/data/ui-constants";
 import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude, getUtcOffsetMinutesAt } from "./birthplace";
+import { deriveCorrelatedStyleText } from "./integrated-style-text";
 
 export interface InterpretationResult {
   astrology: Record<AstrologyPeriodKey, AstrologyInterpreted | null>;
@@ -210,11 +211,17 @@ export function buildResultViewModel(
     planets.push({ name: "달", symbol: "☽", sign: estimated.moonSign, house: 4 });
   }
 
+  const correlated = deriveCorrelatedStyleText({
+    facts: astroPeriod?.interpretationFacts,
+    energyLabel,
+    heroQuote,
+    loveStatusFallback: loveStatus,
+  });
   const styleReadyText = {
     heroQuote,
-    integratedTheme: `키워드: ${energyLabel}`,
-    cautionSignal: `관계: ${loveStatus}`,
-    dailyGuideline: heroQuote,
+    integratedTheme: correlated.integratedTheme,
+    cautionSignal: correlated.cautionSignal,
+    dailyGuideline: correlated.dailyGuideline,
     lifetimeTheme: calculation.astrology.lifetime?.summary,
   };
 
