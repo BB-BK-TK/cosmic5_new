@@ -45,6 +45,23 @@ function indexOfMax(rows: DomainSlice[]): number {
   return idx;
 }
 
+/** 숫자 점수 대신 사용자에게 읽기 쉬운 흐름 표현 */
+function easeWordStrong(score: number): string {
+  if (score >= 5) return "무척 순조로운 편";
+  if (score >= 4) return "비교적 순조로운 편";
+  return "무난한 편";
+}
+
+function cautionForWeakest(label: string, score: number, status: string): string {
+  if (score <= 2) {
+    return `${label} 쪽은 오늘 다른 영역보다 마음이나 에너지가 더 쓰일 수 있어요. 「${status}」 흐름이 느껴지니, 무리하지 않고 속도를 조금 늦춰 다뤄 보세요. 아래 생활 영역 카드에서도 같은 방향을 참고하면 돼요.`;
+  }
+  if (score === 3) {
+    return `${label}는 오늘 평범한 리듬이에요. 「${status}」를 염두에 두고, 가볍게만 조율하면 충분해요.`;
+  }
+  return `${label}도 나쁘진 않지만, 다른 영역만큼 여유 있게 가져가면 더 편해요. 「${status}」 쪽만 한 번 더 살보면 좋아요.`;
+}
+
 export function deriveCorrelatedStyleText(input: {
   facts: AstrologyInterpretationFacts | null | undefined;
   energyLabel: string;
@@ -70,15 +87,15 @@ export function deriveCorrelatedStyleText(input: {
 
   if (weakest.score === strongest.score) {
     return {
-      integratedTheme: `오늘의 기운은 「${energy}」입니다. 연애·일·재물·건강 네 영역이 모두 ${weakest.score}/5 근처로, 큰 편차 없이 고른 흐름으로 읽힙니다.`,
-      cautionSignal: `특정 한 영역만 급하게 밀기보다, 전체 리듬을 지키는 하루가 좋아요.`,
+      integratedTheme: `오늘의 기운은 「${energy}」입니다. 연애·일·재물·건강 네 영역이 서로 비슷한 밸런스로, 들쭉날쭉하지 않은 하루로 읽혀요.`,
+      cautionSignal: `한쪽만 급하게 밀기보다, 전체 리듬을 지키는 편이 더 편할 거예요.`,
       dailyGuideline: input.heroQuote,
     };
   }
 
   return {
-    integratedTheme: `오늘의 기운은 「${energy}」입니다. 생활 영역 중 ${strongest.label}(${strongest.score}/5)이 상대적으로 순조롭고, 「${strongest.status}」 흐름과 맞닿아 있어요.`,
-    cautionSignal: `${weakest.label}는 ${weakest.score}/5 구간으로, 생활 영역 통합 카드의 별점과 같은 기준입니다. 「${weakest.status}」 쪽 기운이 있으니 이 영역은 속도를 조금 늦추고 살피면 좋아요.`,
-    dailyGuideline: `${input.heroQuote} (${strongest.label}은 흐름을 타고, ${weakest.label}은 여유 있게 다루면 통합 해석과 맞물립니다.)`,
+    integratedTheme: `오늘의 기운은 「${energy}」입니다. 특히 ${strongest.label}이 ${easeWordStrong(strongest.score)}이에요. 「${strongest.status}」 흐름과 잘 맞을 수 있어요.`,
+    cautionSignal: cautionForWeakest(weakest.label, weakest.score, weakest.status),
+    dailyGuideline: `${input.heroQuote} (${strongest.label}은 자연스럽게 흐름을 타고, ${weakest.label}은 여유 있게 다루면 오늘의 해석과 잘 맞아요.)`,
   };
 }

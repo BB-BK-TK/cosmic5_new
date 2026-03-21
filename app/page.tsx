@@ -206,24 +206,34 @@ export default function CosmicFivePage() {
       if (json.ok && json.data) {
         setAstroDetailCache((prev) => ({ ...prev, [key]: json.data as AstrologyDetailRewriteOutput }));
       } else {
-        let msg = json.message ?? "별자리 해석 확장에 실패했습니다.";
-        if (res.status === 503) msg = "AI를 사용할 수 없습니다. 기본 문구를 표시합니다.";
-        else if (res.status === 429 || json.error === "RATE_LIMIT") msg = "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
-        setAstroDetailError(msg);
+        if (res.status === 429 || json.error === "RATE_LIMIT") {
+          // 조용히 규칙 기반 문구 유지 (상단 경고로 사용자 경험 망가뜨리지 않음)
+          setAstroDetailError(null);
+        } else {
+          let msg = json.message ?? "별자리 해석 확장에 실패했습니다.";
+          if (res.status === 503) msg = "AI를 사용할 수 없습니다. 기본 문구를 표시합니다.";
+          setAstroDetailError(msg);
+        }
       }
     } catch (e) {
-      setAstroDetailError(e instanceof Error ? e.message : "네트워크 오류. 기본 문구를 표시합니다.");
+      const err = e instanceof Error ? e.message : "";
+      if (err.includes("RATE_LIMIT")) setAstroDetailError(null);
+      else setAstroDetailError(e instanceof Error ? e.message : "네트워크 오류. 기본 문구를 표시합니다.");
     } finally {
       setAstroDetailLoading(false);
     }
   }, [resultViewModel, period]);
 
+  // 별자리 탭을 열었을 때만 LLM 호출 → 결과 직후 스타일 API 등과 동시에 몰리며 429 나는 것 완화
   useEffect(() => {
-    if (!resultViewModel) return;
+    if (activeTab !== 1 || !resultViewModel) return;
     const key = `${period}:${resultViewModel.astrology.sunSign}`;
     if (astroDetailCache[key]) return;
-    void fetchAstroDetailRewrite();
-  }, [resultViewModel, period, astroDetailCache, fetchAstroDetailRewrite]);
+    const t = window.setTimeout(() => {
+      void fetchAstroDetailRewrite();
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [activeTab, resultViewModel, period, astroDetailCache, fetchAstroDetailRewrite]);
 
   const heroDisplay = useMemo(() => {
     if (!slice) return null;
