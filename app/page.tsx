@@ -69,6 +69,7 @@ export default function CosmicFivePage() {
       setStyleError(null);
       setAstroDetailError(null);
       setActiveTab(0);
+      window.scrollTo({ top: 0, behavior: "auto" });
       setView("result");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -81,6 +82,11 @@ export default function CosmicFivePage() {
   const handleRegenerate = () => {
     if (lastBirthInfo) void handleSubmit(lastBirthInfo);
   };
+
+  useEffect(() => {
+    if (view !== "result") return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [view]);
 
   const period = ACTIVE_FORTUNE_PERIOD;
   const slice = useMemo(() => {

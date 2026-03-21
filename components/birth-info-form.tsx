@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "./glass-card";
-import { getStylePresets, NO_STYLE_KEY } from "@/lib/data";
+import { NO_STYLE_KEY } from "@/lib/data";
 import type { StyleOption } from "@/lib/data";
 
 interface BirthInfoFormProps {
@@ -370,33 +370,6 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
               )}
             >
               {option.label}
-            </button>
-          ))}
-        </div>
-      </GlassCard>
-
-      <GlassCard>
-        <h2 className="text-lg font-medium text-text-primary mb-4">
-          표현 스타일
-        </h2>
-        <p className="text-xs text-text-muted mb-3">
-          해석을 어떤 말투로 보여줄지 선택하세요. 결과 화면에서는 바꿀 수 없어요.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {getStylePresets().map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setFormData({ ...formData, toneStyle: opt.value })}
-              className={cn(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                "border",
-                formData.toneStyle === opt.value
-                  ? "bg-accent-purple/20 border-accent-purple/50 text-text-primary"
-                  : "bg-secondary/50 border-glass-border text-text-secondary hover:border-glass-highlight hover:text-text-primary"
-              )}
-            >
-              {opt.label}
             </button>
           ))}
         </div>

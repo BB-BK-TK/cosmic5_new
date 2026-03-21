@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GlassCard } from "@/components/glass-card";
 import { ScoreStars } from "@/components/ui/score-stars";
 import { CosmicSectionLabel } from "@/components/ui/cosmic-section-label";
@@ -13,7 +13,10 @@ interface UnifiedDomainCardsProps {
 }
 
 export function UnifiedDomainCards({ domains, className }: UnifiedDomainCardsProps) {
-  const [openId, setOpenId] = useState<string | null>(domains[0]?.id ?? null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    setOpenId(null);
+  }, [domains]);
   if (!domains.length) return null;
 
   return (
