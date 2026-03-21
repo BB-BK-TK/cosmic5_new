@@ -13,11 +13,11 @@ interface AstrologyData {
     sign: string;
     house: number;
   }[];
-  insights: string[];
   /** Phase 3: per-sign interpretation */
   personality?: string;
-  strengths?: string[];
-  cautions?: string[];
+  strengthsText?: string;
+  cautionsText?: string;
+  luckySummary?: string;
 }
 
 interface AstrologyCardProps {
@@ -68,48 +68,24 @@ export function AstrologyCard({ data }: AstrologyCardProps) {
           <p className="text-sm text-text-secondary leading-relaxed">{data.personality}</p>
         </div>
       )}
-      {(data.strengths?.length ?? 0) > 0 && (
+      {data.strengthsText && (
         <div className="mb-4">
           <h3 className="text-sm text-text-primary mb-2">강점</h3>
-          <ul className="space-y-1 text-sm text-text-secondary">
-            {data.strengths!.map((s, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-positive mt-0.5">•</span>
-                {s}
-              </li>
-            ))}
-          </ul>
+          <p className="text-sm text-text-secondary leading-relaxed">{data.strengthsText}</p>
         </div>
       )}
-      {(data.cautions?.length ?? 0) > 0 && (
+      {data.cautionsText && (
         <div className="mb-4">
           <h3 className="text-sm text-text-primary mb-2">주의할 점</h3>
-          <ul className="space-y-1 text-sm text-text-secondary">
-            {data.cautions!.map((c, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-caution mt-0.5">•</span>
-                {c}
-              </li>
-            ))}
-          </ul>
+          <p className="text-sm text-text-secondary leading-relaxed">{data.cautionsText}</p>
         </div>
       )}
-
-      {/* Divider */}
-      <div className="h-px bg-glass-border mb-6" />
-
-      {/* Insights — Phase 1: fallback when empty */}
-      <div className="space-y-3">
-        {(data.insights?.length ? data.insights : ["오늘의 흐름을 편하게 받아들이세요."]).map((insight, index) => (
-          <p
-            key={index}
-            className="text-sm text-text-secondary leading-relaxed flex items-start gap-2"
-          >
-            <span className="text-accent-purple mt-0.5">•</span>
-            {insight}
-          </p>
-        ))}
-      </div>
+      {data.luckySummary && (
+        <div className="mb-1">
+          <h3 className="text-sm text-text-primary mb-2">행운 포인트</h3>
+          <p className="text-sm text-text-secondary leading-relaxed">{data.luckySummary}</p>
+        </div>
+      )}
     </GlassCard>
   );
 }

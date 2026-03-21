@@ -63,15 +63,32 @@ export interface StyleRewriteInput {
 /** Same shape as SynthesisOutput; content rewritten in the selected style. */
 export type StyleRewriteOutput = SynthesisOutput;
 
+export interface AstrologyDetailRewriteInput {
+  promptVersion: string;
+  sign: string;
+  period: string;
+  personality?: string;
+  strengths: string[];
+  cautions: string[];
+  lucky: { color: string; number: number; time: string };
+}
+
+export interface AstrologyDetailRewriteOutput {
+  strengthsExpanded: string;
+  cautionsExpanded: string;
+  luckySummary: string;
+}
+
 /** API request body. */
 export type AIApiRequest =
   | { action: "synthesis"; payload: SynthesisInput }
-  | { action: "style"; payload: StyleRewriteInput };
+  | { action: "style"; payload: StyleRewriteInput }
+  | { action: "astrology_detail"; payload: AstrologyDetailRewriteInput };
 
 /** API success response. */
 export interface AIApiResponse {
   ok: true;
-  data: SynthesisOutput | StyleRewriteOutput;
+  data: SynthesisOutput | StyleRewriteOutput | AstrologyDetailRewriteOutput;
   /** Which prompt version was used */
   promptVersion: string;
 }

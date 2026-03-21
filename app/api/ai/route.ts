@@ -4,18 +4,24 @@
  * Returns JSON: { ok: true, data, promptVersion } or { ok: false, error, message? }
  */
 
-import type { AIApiRequest, AIApiResponse, AIApiErrorResponse, SynthesisOutput } from "@/types/ai-types";
-import { runSynthesis, runStyleRewrite } from "@/lib/ai";
+import type {
+  AIApiRequest,
+  AIApiResponse,
+  AIApiErrorResponse,
+  SynthesisOutput,
+  AstrologyDetailRewriteOutput,
+} from "@/types/ai-types";
+import { runSynthesis, runStyleRewrite, runAstrologyDetailRewrite } from "@/lib/ai";
 
 /** Simple in-memory cache: key -> { data, expires }. TTL 5 min. */
-const cache = new Map<string, { data: SynthesisOutput; expires: number }>();
+const cache = new Map<string, { data: SynthesisOutput | AstrologyDetailRewriteOutput; expires: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 function cacheKey(action: string, payload: unknown): string {
   return `${action}:${JSON.stringify(payload)}`;
 }
 
-function getCached(key: string): SynthesisOutput | null {
+function getCached(key: string): SynthesisOutput | AstrologyDetailRewriteOutput | null {
   const entry = cache.get(key);
   if (!entry || Date.now() > entry.expires) {
     if (entry) cache.delete(key);
@@ -24,7 +30,7 @@ function getCached(key: string): SynthesisOutput | null {
   return entry.data;
 }
 
-function setCache(key: string, data: SynthesisOutput): void {
+function setCache(key: string, data: SynthesisOutput | AstrologyDetailRewriteOutput): void {
   cache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
 }
 
@@ -98,8 +104,33 @@ export async function POST(request: Request) {
       } satisfies AIApiResponse);
     }
 
+    if (action === "astrology_detail") {
+      const key = cacheKey("astrology_detail", payload);
+      const cached = getCached(key);
+      if (cached) {
+        return Response.json({
+          ok: true,
+          data: cached,
+          promptVersion: "v1",
+        } satisfies AIApiResponse);
+      }
+      const result = await runAstrologyDetailRewrite(payload, apiKey);
+      if (!result) {
+        return Response.json(
+          { ok: false, error: "PARSE_ERROR", message: "Astrology detail rewrite failed or invalid response" } satisfies AIApiErrorResponse,
+          { status: 502 }
+        );
+      }
+      setCache(key, result.data);
+      return Response.json({
+        ok: true,
+        data: result.data,
+        promptVersion: result.promptVersion,
+      } satisfies AIApiResponse);
+    }
+
     return Response.json(
-      { ok: false, error: "INVALID_REQUEST", message: "action must be synthesis or style" } satisfies AIApiErrorResponse,
+      { ok: false, error: "INVALID_REQUEST", message: "action must be synthesis, style, or astrology_detail" } satisfies AIApiErrorResponse,
       { status: 400 }
     );
   } catch (e) {

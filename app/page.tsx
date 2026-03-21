@@ -25,7 +25,7 @@ import { buildResultViewModel, getViewModelSliceForPeriod } from "@/lib/presenta
 import { buildDecisionCriteria } from "@/lib/decision-criteria";
 import { buildUnifiedDomains } from "@/lib/unified-domains";
 import type { ResultViewModel } from "@/types/result-schema";
-import type { SynthesisOutput } from "@/types/ai-types";
+import type { SynthesisOutput, AstrologyDetailRewriteOutput } from "@/types/ai-types";
 import type { ReadingStyleKey } from "@/types/ai-types";
 
 export default function CosmicFivePage() {
@@ -37,6 +37,9 @@ export default function CosmicFivePage() {
   const [styleResultCache, setStyleResultCache] = useState<Record<string, SynthesisOutput>>({});
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleError, setStyleError] = useState<string | null>(null);
+  const [astroDetailCache, setAstroDetailCache] = useState<Record<string, AstrologyDetailRewriteOutput>>({});
+  const [astroDetailLoading, setAstroDetailLoading] = useState(false);
+  const [astroDetailError, setAstroDetailError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const isSubmitting = view === "loading";
   const astrologyCalculator = new AstrologyCalculator();
@@ -62,7 +65,9 @@ export default function CosmicFivePage() {
       setResultViewModel(viewModel);
       setSelectedStyle(birthInfo.toneStyle);
       setStyleResultCache({});
+      setAstroDetailCache({});
       setStyleError(null);
+      setAstroDetailError(null);
       setActiveTab(0);
       setView("result");
     } catch (e) {
@@ -140,6 +145,57 @@ export default function CosmicFivePage() {
     if (selectedStyle !== NO_STYLE_KEY) void fetchStyleRewrite(selectedStyle);
   }, [selectedStyle, fetchStyleRewrite]);
 
+  const fetchAstroDetailRewrite = useCallback(async () => {
+    if (!resultViewModel) return;
+    const astro = resultViewModel.astrology.byPeriod[period];
+    if (!astro) return;
+    const key = `${period}:${resultViewModel.astrology.sunSign}`;
+    setAstroDetailError(null);
+    setAstroDetailLoading(true);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "astrology_detail",
+          payload: {
+            promptVersion: "v1",
+            sign: resultViewModel.astrology.sunSign,
+            period,
+            personality: astro.personality,
+            strengths: astro.strengths ?? [],
+            cautions: astro.cautions ?? [],
+            lucky: {
+              color: astro.interpretationFacts.luckyColor,
+              number: astro.interpretationFacts.luckyNumber,
+              time: astro.interpretationFacts.luckyTime,
+            },
+          },
+        }),
+      });
+      const json = await res.json();
+      if (json.ok && json.data) {
+        setAstroDetailCache((prev) => ({ ...prev, [key]: json.data as AstrologyDetailRewriteOutput }));
+      } else {
+        let msg = json.message ?? "별자리 해석 확장에 실패했습니다.";
+        if (res.status === 503) msg = "AI를 사용할 수 없습니다. 기본 문구를 표시합니다.";
+        else if (res.status === 429 || json.error === "RATE_LIMIT") msg = "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
+        setAstroDetailError(msg);
+      }
+    } catch (e) {
+      setAstroDetailError(e instanceof Error ? e.message : "네트워크 오류. 기본 문구를 표시합니다.");
+    } finally {
+      setAstroDetailLoading(false);
+    }
+  }, [resultViewModel, period]);
+
+  useEffect(() => {
+    if (!resultViewModel) return;
+    const key = `${period}:${resultViewModel.astrology.sunSign}`;
+    if (astroDetailCache[key]) return;
+    void fetchAstroDetailRewrite();
+  }, [resultViewModel, period, astroDetailCache, fetchAstroDetailRewrite]);
+
   const heroDisplay = useMemo(() => {
     if (!slice) return null;
     if (displayStyleResult) {
@@ -188,6 +244,9 @@ export default function CosmicFivePage() {
     if (!resultViewModel) return [];
     return buildUnifiedDomains(resultViewModel, period);
   }, [resultViewModel, period]);
+
+  const astroDetailKey = resultViewModel ? `${period}:${resultViewModel.astrology.sunSign}` : "";
+  const astroDetail = astroDetailKey ? astroDetailCache[astroDetailKey] : null;
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -257,6 +316,12 @@ export default function CosmicFivePage() {
             {styleLoading && selectedStyle !== NO_STYLE_KEY && (
               <p className="text-center text-sm text-text-muted">선택한 표현 스타일로 변환 중입니다.</p>
             )}
+            {activeTab === 1 && astroDetailLoading && (
+              <p className="text-center text-sm text-text-muted">별자리 강점/주의를 더 자세히 정리 중입니다.</p>
+            )}
+            {activeTab === 1 && astroDetailError && (
+              <p className="text-center text-xs text-caution">{astroDetailError}</p>
+            )}
 
             {/* Tab: 통합 해석 */}
             {activeTab === 0 && (
@@ -297,19 +362,18 @@ export default function CosmicFivePage() {
                     moonSign: resultViewModel.astrology.moonSign,
                     risingSign: resultViewModel.astrology.risingSign,
                     planets: resultViewModel.astrology.planets,
-                    insights: resultViewModel.astrology.byPeriod[period]?.interpretationFacts
-                      ? [
-                          resultViewModel.astrology.byPeriod[period]!.interpretationFacts.energy,
-                          `연애: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.loveStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.loveScore}/5)`,
-                          `커리어: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.careerStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.careerScore}/5)`,
-                          `재물: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.moneyStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.moneyScore}/5)`,
-                          `건강: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.healthStatus} (${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.healthScore}/5, ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.bodyPart})`,
-                          `행운 색: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyColor}, 숫자: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyNumber}, 시간대: ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyTime}`,
-                        ]
-                      : ["오늘의 흐름을 편하게 받아들이세요."],
                     personality: resultViewModel.astrology.byPeriod[period]?.personality,
-                    strengths: resultViewModel.astrology.byPeriod[period]?.strengths,
-                    cautions: resultViewModel.astrology.byPeriod[period]?.cautions,
+                    strengthsText:
+                      astroDetail?.strengthsExpanded ??
+                      (resultViewModel.astrology.byPeriod[period]?.strengths ?? []).join(" "),
+                    cautionsText:
+                      astroDetail?.cautionsExpanded ??
+                      (resultViewModel.astrology.byPeriod[period]?.cautions ?? []).join(" "),
+                    luckySummary:
+                      astroDetail?.luckySummary ??
+                      (resultViewModel.astrology.byPeriod[period]
+                        ? `행운의 색은 ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyColor}, 숫자는 ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyNumber}, 시간대는 ${resultViewModel.astrology.byPeriod[period]!.interpretationFacts.luckyTime}입니다.`
+                        : undefined),
                   }}
                 />
               </section>

@@ -86,3 +86,34 @@ Output a single JSON object with exactly these keys (all strings, Korean): heroQ
 
   return { system, user };
 }
+
+export function buildAstrologyDetailPrompt(input: {
+  sign: string;
+  period: string;
+  personality?: string;
+  strengths: string[];
+  cautions: string[];
+  lucky: { color: string; number: number; time: string };
+}): { system: string; user: string } {
+  const system = `You expand astrology strengths/cautions into richer Korean guidance text without adding contradictory facts.
+${GUARDRAILS}
+Output a single JSON object with exactly these keys (all strings, Korean): strengthsExpanded, cautionsExpanded, luckySummary.
+No markdown, no code fences, only JSON.`;
+
+  const user = `아래 별자리 해석 원문을 더 풀어서 자연스럽게 작성해 주세요.
+- 별자리: ${input.sign}
+- 기간: ${input.period}
+- 성향: ${input.personality ?? "(없음)"}
+- 강점 원문: ${input.strengths.join(" / ") || "(없음)"}
+- 주의 원문: ${input.cautions.join(" / ") || "(없음)"}
+- 행운 정보: 색 ${input.lucky.color}, 숫자 ${input.lucky.number}, 시간대 ${input.lucky.time}
+
+요구사항:
+1) strengthsExpanded: 강점들을 2~4문장으로 연결해서 설명
+2) cautionsExpanded: 주의할 점을 2~4문장으로 연결해서 설명
+3) luckySummary: 행운의 색/숫자/시간대를 한 문단으로 묶어서 제시
+
+데이터와 모순되는 새 사실은 만들지 말고, JSON만 출력하세요.`;
+
+  return { system, user };
+}

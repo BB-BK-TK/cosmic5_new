@@ -3,8 +3,15 @@
  * Builds prompts and parses LLM output. Used by API route.
  */
 
-import type { SynthesisInput, SynthesisOutput, StyleRewriteInput, StyleRewriteOutput } from "@/types/ai-types";
-import { buildSynthesisPrompt, buildStyleRewritePrompt, PROMPT_VERSION } from "./prompts";
+import type {
+  SynthesisInput,
+  SynthesisOutput,
+  StyleRewriteInput,
+  StyleRewriteOutput,
+  AstrologyDetailRewriteInput,
+  AstrologyDetailRewriteOutput,
+} from "@/types/ai-types";
+import { buildSynthesisPrompt, buildStyleRewritePrompt, buildAstrologyDetailPrompt, PROMPT_VERSION } from "./prompts";
 import { chatCompletion } from "./llm";
 
 /** Parse JSON from LLM response; strip markdown code blocks if present. */
@@ -29,6 +36,16 @@ function validateSynthesisOutput(obj: unknown): obj is SynthesisOutput {
     typeof o.integratedTheme === "string" &&
     typeof o.cautionSignal === "string" &&
     typeof o.dailyGuideline === "string"
+  );
+}
+
+function validateAstrologyDetailOutput(obj: unknown): obj is AstrologyDetailRewriteOutput {
+  if (!obj || typeof obj !== "object") return false;
+  const o = obj as Record<string, unknown>;
+  return (
+    typeof o.strengthsExpanded === "string" &&
+    typeof o.cautionsExpanded === "string" &&
+    typeof o.luckySummary === "string"
   );
 }
 
@@ -101,6 +118,34 @@ export async function runStyleRewrite(
       dailyGuideline: parsed.dailyGuideline,
       lifetimeTheme: parsed.lifetimeTheme,
     },
+    promptVersion: PROMPT_VERSION,
+  };
+}
+
+export async function runAstrologyDetailRewrite(
+  input: AstrologyDetailRewriteInput,
+  apiKey?: string
+): Promise<{ data: AstrologyDetailRewriteOutput; promptVersion: string } | null> {
+  const { system, user } = buildAstrologyDetailPrompt({
+    sign: input.sign,
+    period: input.period,
+    personality: input.personality,
+    strengths: input.strengths,
+    cautions: input.cautions,
+    lucky: input.lucky,
+  });
+
+  const result = await chatCompletion(
+    [{ role: "system", content: system }, { role: "user", content: user }],
+    { apiKey }
+  );
+  if (!result) return null;
+
+  const parsed = parseJsonResponse<AstrologyDetailRewriteOutput>(result.content);
+  if (!parsed || !validateAstrologyDetailOutput(parsed)) return null;
+
+  return {
+    data: parsed,
     promptVersion: PROMPT_VERSION,
   };
 }
