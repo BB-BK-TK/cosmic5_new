@@ -5,7 +5,7 @@
 
 import type { SajuDomainCard, SajuInterpretationFacts } from "@/types/result-schema";
 import type { SajuRawOutput } from "@/lib/calculation-layer";
-import { getElementMeaning, getDayMasterDomainTendency } from "./saju-content";
+import { getSajuElementMeaning, getDayMasterTendency } from "@/lib/data";
 
 export interface SajuRichInterpretation {
   interpretationFacts: SajuInterpretationFacts;
@@ -22,8 +22,8 @@ export function interpretSaju(raw: SajuRawOutput): SajuRichInterpretation {
   const dayMasterStrengths = ilgan?.장점 ?? "다양한 강점";
   const dayMasterCautions = ilgan?.단점 ?? "무리하지 않기";
 
-  const dominantMeaning = dominant ? getElementMeaning(dominant)?.dominantMeaning ?? raw.excess?.meaning ?? "" : "";
-  const deficientMeaning = weak ? getElementMeaning(weak)?.deficientMeaning ?? raw.deficient?.meaning ?? "" : "";
+  const dominantMeaning = dominant ? getSajuElementMeaning(dominant)?.dominantMeaning ?? raw.excess?.meaning ?? "" : "";
+  const deficientMeaning = weak ? getSajuElementMeaning(weak)?.deficientMeaning ?? raw.deficient?.meaning ?? "" : "";
   const elementBalanceNote =
     !dominant && !weak
       ? "오행이 고르게 분포되어 있어요. 균형을 유지하는 습관이 좋습니다."
@@ -38,7 +38,7 @@ export function interpretSaju(raw: SajuRawOutput): SajuRichInterpretation {
           ? `${weak} 기운을 보강하면 좋습니다. ${deficientMeaning}`
           : "오행이 고르게 분포되어 있어 안정적입니다. 현재 흐름을 유지하세요.";
 
-  const tendency = getDayMasterDomainTendency(raw.ilgan);
+  const tendency = getDayMasterTendency(raw.ilgan);
   const relationshipsReading = tendency?.relationships ?? "일간 성향에 맞는 관계는 서로 존중하고 대화를 나누는 것입니다.";
   const workReading = tendency?.work ?? "일간의 강점을 살린 업무 선택이 성과로 이어집니다.";
   const moneyReading = tendency?.money ?? "계획적 지출과 비상금 확보를 우선으로 하세요.";

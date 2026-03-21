@@ -23,6 +23,7 @@ export interface DbBirthProfile {
 export interface DbReadingRequest {
   id: string;
   profile_id?: string | null;
+  /** Main app UI: use `'daily'` (오늘의 운세). See cosmic5-ui-requirements.md */
   period_key: string;
   style_key: string;
   requested_at: string;

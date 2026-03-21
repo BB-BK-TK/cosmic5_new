@@ -7,6 +7,7 @@
 import type { AstrologyPeriodKey, ResultViewModel, HeroSummaryViewModel, DomainCardViewModel, WhyThisResultSection, MetadataTagViewModel } from "@/types/result-schema";
 import type { CalculationResult } from "./calculation-layer";
 import type { AstrologyInterpreted, SajuInterpreted } from "./interpretation-layer";
+import { ACTIVE_FORTUNE_PERIOD } from "@/lib/data/ui-constants";
 
 export interface InterpretationResult {
   astrology: Record<AstrologyPeriodKey, AstrologyInterpreted | null>;
@@ -110,7 +111,7 @@ export function buildResultViewModel(
   options: { birthDate: string; birthTime?: string; activePeriod?: AstrologyPeriodKey }
 ): ResultViewModel {
   const now = new Date();
-  const period = (options.activePeriod ?? "daily") as AstrologyPeriodKey;
+  const period = (options.activePeriod ?? ACTIVE_FORTUNE_PERIOD) as AstrologyPeriodKey;
   const astroPeriod = interpretation.astrology[period];
   const rawPeriod = calculation.astrology.byPeriod[period];
 
@@ -148,7 +149,7 @@ export function buildResultViewModel(
   if (rawPeriod) {
     whySections.push({
       title: "별자리 기반",
-      content: `${calculation.astrology.signKo} (${calculation.astrology.signInfo?.element ?? ""}·${calculation.astrology.signInfo?.modality ?? ""}). ${period === "daily" ? "오늘" : period === "weekly" ? "이번 주" : period === "monthly" ? "이번 달" : "올해"} 기운을 반영한 해석입니다.`,
+      content: `${calculation.astrology.signKo} (${calculation.astrology.signInfo?.element ?? ""}·${calculation.astrology.signInfo?.modality ?? ""}). 오늘 기운을 반영한 해석입니다.`,
       source: "astrology",
     });
   }

@@ -14,3 +14,4 @@ export {
   NO_STYLE_KEY,
 } from "./content-provider";
 export type { StyleOption } from "./content-provider";
+export { ACTIVE_FORTUNE_PERIOD } from "./ui-constants";

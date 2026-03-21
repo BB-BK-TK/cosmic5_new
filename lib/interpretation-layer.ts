@@ -22,9 +22,9 @@ export function runInterpretation(calculation: CalculationResult): {
 } {
   const astrology = {
     daily: calculation.astrology.byPeriod.daily ? interpretAstrologyPeriod(calculation.astrology.byPeriod.daily) : null,
-    weekly: calculation.astrology.byPeriod.weekly ? interpretAstrologyPeriod(calculation.astrology.byPeriod.weekly) : null,
-    monthly: calculation.astrology.byPeriod.monthly ? interpretAstrologyPeriod(calculation.astrology.byPeriod.monthly) : null,
-    yearly: calculation.astrology.byPeriod.yearly ? interpretAstrologyPeriod(calculation.astrology.byPeriod.yearly) : null,
+    weekly: null,
+    monthly: null,
+    yearly: null,
     lifetime: calculation.astrology.byPeriod.lifetime ? interpretAstrologyPeriod(calculation.astrology.byPeriod.lifetime) : null,
   };
   const saju = interpretSaju(calculation.saju);

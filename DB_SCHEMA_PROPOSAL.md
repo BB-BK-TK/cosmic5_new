@@ -201,6 +201,8 @@ CREATE INDEX idx_ai_generated_request_style ON ai_generated_outputs(request_id, 
 
 See `types/db-schema.ts` for interfaces that mirror these tables. Use for type-safe access when integrating Supabase client.
 
+**UI alignment:** `cosmic5-ui-requirements.md` + SQL in `db/migrations/001_cosmic5_schema.sql`. Current product surface uses **`daily`** only for fortune (`reading_requests.period_key`).
+
 ---
 
 ## 6. Migration Plan (Current → DB-Ready)

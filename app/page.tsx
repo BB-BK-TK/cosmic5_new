@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect, type ReactNode } from "react
 import Image from "next/image";
 import { StarBackground } from "@/components/star-background";
 import { BirthInfoForm, type BirthInfo } from "@/components/birth-info-form";
-import { ResultTabs } from "@/components/result-tabs";
 import { LoadingScreen } from "@/components/loading-screen";
 import { HeroSummary, DomainCards, WhyThisResult, MetadataTags } from "@/components/result";
 import { AstrologyCard } from "@/components/astrology-card";
@@ -13,7 +12,7 @@ import { FiveElementsChart } from "@/components/five-elements-chart";
 import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
 import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
-import { getStylePresets } from "@/lib/data";
+import { getStylePresets, ACTIVE_FORTUNE_PERIOD } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/glass-card";
 import { SajuCalculator } from "@/lib/saju-db";
@@ -22,23 +21,14 @@ import { runCalculations } from "@/lib/calculation-layer";
 import { runInterpretation } from "@/lib/interpretation-layer";
 import { buildResultViewModel, getViewModelSliceForPeriod } from "@/lib/presentation-layer";
 import type { ResultViewModel } from "@/types/result-schema";
-import type { AstrologyPeriodKey } from "@/types/result-schema";
 import type { SynthesisOutput } from "@/types/ai-types";
 import type { ReadingStyleKey } from "@/types/ai-types";
-
-const TAB_TO_PERIOD: Record<string, AstrologyPeriodKey> = {
-  today: "daily",
-  week: "weekly",
-  month: "monthly",
-  year: "yearly",
-};
 
 type AnalysisSectionKey = "holistic" | "astrology" | "saju";
 const ANALYSIS_UNLOCK_ORDER: AnalysisSectionKey[] = ["holistic", "astrology", "saju"];
 
 export default function CosmicFivePage() {
   const [view, setView] = useState<"input" | "loading" | "result">("input");
-  const [activeTab, setActiveTab] = useState("today");
   const [resultViewModel, setResultViewModel] = useState<ResultViewModel | null>(null);
   const [lastBirthInfo, setLastBirthInfo] = useState<BirthInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -73,7 +63,7 @@ export default function CosmicFivePage() {
       const viewModel = buildResultViewModel(calculation, interpretation, {
         birthDate: birthInfo.birthDate,
         birthTime: birthInfo.birthTime,
-        activePeriod: "daily",
+        activePeriod: ACTIVE_FORTUNE_PERIOD,
       });
       setResultViewModel(viewModel);
       setSelectedStyle(birthInfo.toneStyle);
@@ -106,7 +96,7 @@ export default function CosmicFivePage() {
     setUnlockedSections({ holistic: true, astrology: true, saju: true });
   }, []);
 
-  const period = TAB_TO_PERIOD[activeTab] ?? "daily";
+  const period = ACTIVE_FORTUNE_PERIOD;
   const slice = useMemo(() => {
     if (!resultViewModel) return null;
     return getViewModelSliceForPeriod(resultViewModel, period);
@@ -241,7 +231,9 @@ export default function CosmicFivePage() {
 
         {view === "result" && resultViewModel && slice && (
           <div className="space-y-8 animate-in fade-in duration-500">
-            <ResultTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            <div className="mb-6 pb-3 border-b border-glass-border">
+              <p className="text-center text-sm font-medium text-text-primary tracking-wide">오늘의 운세</p>
+            </div>
             <button
               type="button"
               onClick={unlockAllSections}

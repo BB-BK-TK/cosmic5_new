@@ -108,16 +108,14 @@ export function runCalculations(
   const signInfo = db?.signs?.data?.[sign] ? { element: db.signs.data[sign].element ?? "", modality: db.signs.data[sign].modality ?? "", personality: db.signs.data[sign].personality ?? "" } : null;
 
   const daily = astrologyCalc.getDaily(sign, now);
-  const weekly = astrologyCalc.getWeekly(sign, now);
-  const monthly = astrologyCalc.getMonthly(sign, now.getFullYear(), now.getMonth() + 1);
-  const yearly = astrologyCalc.getYearly(sign, now.getFullYear());
   const lifetime = astrologyCalc.getLifetime(birthDateObj);
 
+  /** UI: 오늘의 운세만. 주·월·년 raw는 계산하지 않음 (타입 호환을 위해 null). */
   const byPeriod: Record<AstrologyPeriodKey, AstrologyRawPerPeriod | null> = {
     daily: mapEngineReadingToRaw(daily, "daily", "오늘", now, signInfo),
-    weekly: mapEngineReadingToRaw(weekly, "weekly", "이번 주", now, signInfo),
-    monthly: mapEngineReadingToRaw(monthly, "monthly", "이번 달", now, signInfo),
-    yearly: mapEngineReadingToRaw(yearly, "yearly", "올해", now, signInfo),
+    weekly: null,
+    monthly: null,
+    yearly: null,
     lifetime: null,
   };
   if (lifetime) {

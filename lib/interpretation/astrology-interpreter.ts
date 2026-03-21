@@ -5,8 +5,7 @@
 
 import type { AstrologyPeriodKey, AstrologyDomainCard, AstrologyInterpretationFacts } from "@/types/result-schema";
 import type { AstrologyRawPerPeriod } from "@/lib/calculation-layer";
-import { getSignContent } from "./astrology-content";
-import { PERIOD_TONE } from "./astrology-content";
+import { getSignInterpretation, getPeriodTone } from "@/lib/data";
 
 export interface AstrologyRichInterpretation {
   period: AstrologyPeriodKey;
@@ -22,8 +21,8 @@ export interface AstrologyRichInterpretation {
 }
 
 export function interpretAstrologyPeriod(raw: AstrologyRawPerPeriod): AstrologyRichInterpretation {
-  const content = getSignContent(raw.signKo);
-  const tone = PERIOD_TONE[raw.period] ?? { intro: "오늘은", suffix: " 흐름을 참고하세요." };
+  const content = getSignInterpretation(raw.signKo);
+  const tone = getPeriodTone(raw.period) ?? { intro: "오늘은", suffix: " 흐름을 참고하세요." };
 
   const personality = content?.personality ?? raw.signInfo?.personality ?? `${raw.signKo}의 성향이 반영된 기운입니다.`;
   const strengths = content?.strengths ?? [];
@@ -45,10 +44,10 @@ export function interpretAstrologyPeriod(raw: AstrologyRawPerPeriod): AstrologyR
     luckyTime: raw.lucky.time,
   };
 
-  const loveGuidance = content?.domainGuidance.love ?? raw.love.status;
-  const careerGuidance = content?.domainGuidance.career ?? raw.career.status;
-  const moneyGuidance = content?.domainGuidance.money ?? raw.money.status;
-  const healthGuidance = content?.domainGuidance.health ?? `${raw.health.status}. ${raw.health.bodyPart} 케어를 권합니다.`;
+  const loveGuidance = content?.domainGuidance?.love ?? raw.love.status;
+  const careerGuidance = content?.domainGuidance?.career ?? raw.career.status;
+  const moneyGuidance = content?.domainGuidance?.money ?? raw.money.status;
+  const healthGuidance = content?.domainGuidance?.health ?? `${raw.health.status}. ${raw.health.bodyPart} 케어를 권합니다.`;
 
   const domainCards: AstrologyDomainCard[] = [
     { id: "love", domain: "love", title: "연애", score: raw.love.score, summary: `${raw.love.status} (${raw.love.score}/5). ${loveGuidance}`, keyPoint: loveGuidance },
