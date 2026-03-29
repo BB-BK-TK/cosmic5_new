@@ -210,6 +210,13 @@ export function buildResultViewModel(
   if (estimated.moonSign && estimated.moonSign !== "정보 부족") {
     planets.push({ name: "달", symbol: "☽", sign: estimated.moonSign, house: 4 });
   }
+  if (
+    estimated.risingSign &&
+    estimated.risingSign !== "출생시간 필요" &&
+    estimated.risingSign !== "정보 부족"
+  ) {
+    planets.push({ name: "상승", symbol: "↑", sign: estimated.risingSign, house: 1 });
+  }
 
   const correlated = deriveCorrelatedStyleText({
     facts: astroPeriod?.interpretationFacts,

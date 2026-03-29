@@ -17,6 +17,8 @@ export interface DbBirthProfile {
   birth_date: string;
   birth_time?: string | null;
   birth_place?: string | null;
+  /** 별자리 상승(ASC) 한글, 예: 천칭자리 */
+  rising_sign_ko?: string | null;
   birth_lat?: number | null;
   birth_lon?: number | null;
   birth_timezone?: string | null;

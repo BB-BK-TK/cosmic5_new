@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS birth_profiles (
   birth_date date NOT NULL,
   birth_time time,
   birth_place text,
+  rising_sign_ko text,
   created_at timestamptz DEFAULT now()
 );
 

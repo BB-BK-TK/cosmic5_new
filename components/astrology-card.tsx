@@ -59,7 +59,9 @@ export function AstrologyCard({ data }: AstrologyCardProps) {
           </div>
         </div>
       ) : (
-        <p className="text-xs text-text-muted mb-6">태양만 표시됩니다. 출생시간 입력 시 달·승승 정보를 제공할 예정입니다.</p>
+        <p className="text-xs text-text-muted mb-6">
+          핵심 행성 목록은 태양을 기본으로 하며, 출생 시간이 있으면 달·상승(근사)이 추가됩니다. 수·금·화 등은 추후 에페머리스 연동 예정입니다.
+        </p>
       )}
 
       {/* Phase 3: personality / strengths / cautions when present */}

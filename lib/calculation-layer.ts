@@ -7,6 +7,7 @@
 import type { AstrologyPeriodKey } from "@/types/result-schema";
 import { AstrologyCalculator } from "./astrology-db";
 import { SajuCalculator } from "./saju-db";
+import { calculateSajuFromSolar } from "./saju-lunar";
 import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude, getUtcOffsetMinutesAt } from "./birthplace";
 
 export interface AstrologyRawPerPeriod {
@@ -161,7 +162,8 @@ export function runCalculations(
     };
   }
 
-  const saju = sajuCalc.calculate(year, month, day, hourNum);
+  /** 四柱: `lunar-javascript` (절기·입춘 반영). 구 `saju-db` 단독 계산은 절기 연도 누락으로 월주 오류 가능. */
+  const saju = calculateSajuFromSolar(year, month, day, hourNum, sajuCalc);
   const pillarsDisplay = sajuCalc.getPillarDisplay(saju);
   const dayMasterDisplay = sajuCalc.getDayMasterDisplay(saju);
   const analysis = sajuCalc.getElementsAnalysis(saju.elements?.퍼센트);

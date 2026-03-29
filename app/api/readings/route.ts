@@ -7,6 +7,8 @@ interface SaveReadingBody {
     birthDate: string;
     birthTime?: string;
     birthPlace?: string;
+    /** 별자리 상승(한글). 출생시간·근사치 없으면 생략 */
+    risingSignKo?: string;
   };
   periodKey: string;
   styleKey: string;
@@ -30,6 +32,17 @@ export async function POST(req: Request) {
       return Response.json({ ok: false, error: "INVALID_REQUEST" }, { status: 400 });
     }
 
+    const rising =
+      typeof birthInfo.risingSignKo === "string" && birthInfo.risingSignKo.trim()
+        ? birthInfo.risingSignKo.trim()
+        : null;
+    const risingStorable =
+      rising &&
+      rising !== "출생시간 필요" &&
+      rising !== "정보 부족"
+        ? rising
+        : null;
+
     const { data: profile, error: profileError } = await sb
       .from("birth_profiles")
       .insert({
@@ -38,6 +51,7 @@ export async function POST(req: Request) {
         birth_date: birthInfo.birthDate,
         birth_time: birthInfo.birthTime || null,
         birth_place: birthInfo.birthPlace || null,
+        rising_sign_ko: risingStorable,
         birth_lat: birthContext.resolvedLocation?.lat ?? null,
         birth_lon: birthContext.resolvedLocation?.lon ?? null,
         birth_timezone: birthContext.resolvedLocation?.timeZone ?? null,

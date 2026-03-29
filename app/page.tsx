@@ -85,6 +85,7 @@ export default function CosmicFivePage() {
             birthDate: birthInfo.birthDate,
             birthTime: birthInfo.birthTime,
             birthPlace: birthInfo.birthPlace,
+            risingSignKo: viewModel.astrology.risingSign,
           },
           periodKey: ACTIVE_FORTUNE_PERIOD,
           styleKey: birthInfo.toneStyle || NO_STYLE_KEY,
