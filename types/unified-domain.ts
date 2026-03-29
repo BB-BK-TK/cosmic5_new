@@ -7,7 +7,6 @@ export interface UnifiedDomain {
   area: string;
   icon: string;
   score: number;
-  luck: string;
   summary: string;
   astroDetail: string;
   sajuDetail: string;

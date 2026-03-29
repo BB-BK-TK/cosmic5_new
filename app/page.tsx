@@ -24,6 +24,7 @@ import { runInterpretation } from "@/lib/interpretation-layer";
 import { buildResultViewModel, getViewModelSliceForPeriod } from "@/lib/presentation-layer";
 import { buildDecisionCriteria } from "@/lib/decision-criteria";
 import { buildUnifiedDomains } from "@/lib/unified-domains";
+import { stripLeadingZodiacFromMessage } from "@/lib/hero-text-utils";
 import type { ResultViewModel } from "@/types/result-schema";
 import type { SynthesisOutput, AstrologyDetailRewriteOutput } from "@/types/ai-types";
 import type { ReadingStyleKey } from "@/types/ai-types";
@@ -237,16 +238,17 @@ export default function CosmicFivePage() {
   }, [activeTab, resultViewModel, period, astroDetailCache, fetchAstroDetailRewrite]);
 
   const heroDisplay = useMemo(() => {
-    if (!slice) return null;
+    if (!slice || !resultViewModel) return null;
+    const sign = resultViewModel.astrology.sunSign;
     if (displayStyleResult) {
       return {
         ...slice.heroSummary,
-        message: displayStyleResult.heroQuote,
+        message: stripLeadingZodiacFromMessage(sign, displayStyleResult.heroQuote),
         subtitle: displayStyleResult.lifetimeTheme || slice.heroSummary.subtitle,
       };
     }
     return slice.heroSummary;
-  }, [slice, displayStyleResult]);
+  }, [slice, displayStyleResult, resultViewModel]);
 
   const energyHighlight = resultViewModel?.astrology.byPeriod[period]?.interpretationFacts?.energy;
 
@@ -304,14 +306,16 @@ export default function CosmicFivePage() {
             </button>
           )}
           <div className="mb-2 flex justify-center">
-            <Image
-              src="/cosmic5-logo.png"
-              alt="Cosmic 5"
-              width={320}
-              height={96}
-              className="h-20 w-auto max-w-[min(100%,360px)] object-contain object-center sm:h-24"
-              priority
-            />
+            <div className="rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-3 shadow-[0_8px_40px_rgba(120,100,255,0.25),0_0_0_1px_rgba(255,255,255,0.06)_inset] backdrop-blur-md sm:px-7 sm:py-4">
+              <Image
+                src="/cosmic5-logo.png"
+                alt="Cosmic 5"
+                width={360}
+                height={108}
+                className="h-[4.5rem] w-auto max-w-[min(100%,340px)] object-contain object-center drop-shadow-[0_2px_12px_rgba(255,255,255,0.15)] sm:h-[5.25rem]"
+                priority
+              />
+            </div>
           </div>
           <p className="text-sm text-text-secondary">별과 오행이 읽어주는 오늘의 방향</p>
         </header>

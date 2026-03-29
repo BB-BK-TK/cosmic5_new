@@ -16,20 +16,14 @@ function pickAstro(
   return viewModel.astrology.byPeriod[period]?.domainCards.find((c) => c.domain === domain);
 }
 
-function luckLine(viewModel: ResultViewModel, period: AstrologyPeriodKey): string {
-  const f = viewModel.astrology.byPeriod[period]?.interpretationFacts;
-  if (!f) return "행운을 열린 마음으로 받아들이세요.";
-  return `${f.luckyColor} · ${f.luckyNumber} · ${f.luckyTime}`;
-}
-
 /**
  * 4 rows: 연애·관계, 커리어·일, 재물, 건강 — 별자리 점수 + 사주 텍스트 결합.
+ * (행운 색·숫자·시간대는 상단 히어로 카드로 이동)
  */
 export function buildUnifiedDomains(
   viewModel: ResultViewModel,
   period: AstrologyPeriodKey
 ): UnifiedDomain[] {
-  const luck = luckLine(viewModel, period);
   const saju = viewModel.saju.domainCards;
 
   const rows: {
@@ -65,7 +59,6 @@ export function buildUnifiedDomains(
       area: row.area,
       icon: row.icon,
       score,
-      luck,
       summary,
       astroDetail,
       sajuDetail,

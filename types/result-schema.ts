@@ -153,6 +153,8 @@ export interface HeroSummaryViewModel {
   period: AstrologyPeriodKey;
   /** Optional: e.g. lifetime theme one-liner */
   subtitle?: string;
+  /** 통합 탭 상단: 오늘의 행운 색·숫자·시간대 한 줄 */
+  luckyLine?: string;
 }
 
 export interface DomainCardViewModel {

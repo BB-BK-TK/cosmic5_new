@@ -30,7 +30,7 @@ export function SajuCard({ data }: SajuCardProps) {
   return (
     <GlassCard badge={{ label: "四柱 Saju", variant: "teal" }}>
       {/* Four Pillars */}
-      <div className="grid grid-cols-4 gap-2 mb-6">
+      <div className="grid grid-cols-4 gap-2 mb-3">
         {data.pillars.map((pillar) => (
           <div
             key={pillar.type}
@@ -50,6 +50,12 @@ export function SajuCard({ data }: SajuCardProps) {
           </div>
         ))}
       </div>
+      <p className="mb-6 text-xs leading-relaxed text-text-muted">
+        각 칸 아래 동물(띠) 표시는{" "}
+        <span className="font-medium text-text-secondary">지지(十二支)</span>에 붙는 십이지 상징이에요.{" "}
+        <span className="text-text-secondary">년주</span>의 띠가 흔히 말하는 출생 연도 띠와 같고, 월·일·시주의
+        띠는 그 기둥이 가리키는 기운을 읽을 때 참고하는 표지입니다(모두 같은 띠일 필요는 없어요).
+      </p>
 
       {/* Day Master */}
       <div className="bg-secondary/30 rounded-xl p-4 mb-6">

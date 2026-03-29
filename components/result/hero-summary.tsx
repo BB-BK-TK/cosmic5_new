@@ -63,6 +63,11 @@ export function HeroSummary({ data, highlightSegment, tags, className }: HeroSum
         {data.subtitle && (
           <p className="mb-4 text-sm leading-relaxed text-text-secondary">{data.subtitle}</p>
         )}
+        {data.luckyLine && (
+          <p className="mb-4 rounded-xl border border-accent-teal/25 bg-accent-teal/[0.08] px-4 py-3 text-sm font-medium text-accent-teal/95">
+            ✦ {data.luckyLine}
+          </p>
+        )}
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2">
             {tags.map((tag, i) => (

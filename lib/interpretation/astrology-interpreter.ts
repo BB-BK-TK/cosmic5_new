@@ -56,7 +56,8 @@ export function interpretAstrologyPeriod(raw: AstrologyRawPerPeriod): AstrologyR
     { id: "health", domain: "health", title: "건강", score: raw.health.score, summary: `${raw.health.status} (${raw.health.score}/5). ${healthGuidance}`, keyPoint: raw.health.bodyPart },
   ];
 
-  const intro = tone.intro ? `${raw.signKo} ${tone.intro}` : `${raw.signKo}`;
+  /** 상단 메시지에는 별자리 이름 접두어를 붙이지 않음(메타 태그에 표시). */
+  const intro = (tone.intro ?? "오늘은").trim() || "오늘은";
   const interpretedSummary = raw.period === "lifetime"
     ? raw.summary
     : `${intro} ${raw.energy}한 흐름이 예상됩니다. 연애는 ${raw.love.status}, 커리어는 ${raw.career.status}.${tone.suffix}`;

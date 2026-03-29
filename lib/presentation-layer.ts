@@ -10,6 +10,8 @@ import type { AstrologyInterpreted, SajuInterpreted } from "./interpretation-lay
 import { ACTIVE_FORTUNE_PERIOD } from "@/lib/data/ui-constants";
 import { resolveBirthLocation, solarTimeOffsetMinutesByLongitude, getUtcOffsetMinutesAt } from "./birthplace";
 import { deriveCorrelatedStyleText } from "./integrated-style-text";
+import { stripLeadingZodiacFromMessage, formatLuckyLine } from "./hero-text-utils";
+import { buildMicroActionsFromReading } from "./micro-actions";
 
 export interface InterpretationResult {
   astrology: Record<AstrologyPeriodKey, AstrologyInterpreted | null>;
@@ -125,7 +127,10 @@ export function buildResultViewModel(
   const astroPeriod = interpretation.astrology[period];
   const rawPeriod = calculation.astrology.byPeriod[period];
 
-  const heroQuote = astroPeriod?.interpretedSummary ?? rawPeriod?.summary ?? "오늘 하루 좋은 에너지가 함께하길.";
+  const signKo = calculation.astrology.signKo;
+  const rawHeroQuote =
+    astroPeriod?.interpretedSummary ?? rawPeriod?.summary ?? "오늘 하루 좋은 에너지가 함께하길.";
+  const heroQuote = stripLeadingZodiacFromMessage(signKo, rawHeroQuote);
   const energyLabel = astroPeriod?.interpretationFacts.energy ?? rawPeriod?.energy ?? "";
   const loveStatus = astroPeriod?.interpretationFacts.loveStatus ?? rawPeriod?.love.status ?? "";
   const dateLabel = period !== "lifetime" ? formatDateByTab(period, now) : "";
@@ -159,7 +164,7 @@ export function buildResultViewModel(
   if (rawPeriod) {
     whySections.push({
       title: "별자리 기반",
-      content: `${calculation.astrology.signKo} (${calculation.astrology.signInfo?.element ?? ""}·${calculation.astrology.signInfo?.modality ?? ""}). 오늘 기운을 반영한 해석입니다.`,
+      content: `${signKo} (${calculation.astrology.signInfo?.element ?? ""}·${calculation.astrology.signInfo?.modality ?? ""}). 오늘 기운을 반영한 해석입니다.`,
       source: "astrology",
     });
   }
@@ -198,11 +203,9 @@ export function buildResultViewModel(
     },
   };
 
-  const planets = [
-    { name: "태양", symbol: "☉", sign: calculation.astrology.signKo, house: 1 },
-  ];
+  const planets = [{ name: "태양", symbol: "☉", sign: signKo, house: 1 }];
   const estimated = estimateMoonAndRising(
-    calculation.astrology.signKo,
+    signKo,
     options.birthDate,
     options.birthTime,
     options.birthPlace
@@ -232,17 +235,23 @@ export function buildResultViewModel(
     lifetimeTheme: calculation.astrology.lifetime?.summary,
   };
 
-  const microActions = [
-    { id: "1", text: "오늘의 핵심 목표 1개만 정하고 끝내기", tag: "커리어" },
-    { id: "2", text: "짧게 산책하며 리듬 회복하기", tag: "건강" },
-    { id: "3", text: "감정이 올라오면 10초 멈추고 한 번 더 생각하기", tag: "멘탈" },
-  ];
+  const microActions = buildMicroActionsFromReading(interpretation, period);
+
+  const luckyLine =
+    astroPeriod?.interpretationFacts != null
+      ? formatLuckyLine(
+          astroPeriod.interpretationFacts.luckyColor,
+          astroPeriod.interpretationFacts.luckyNumber,
+          astroPeriod.interpretationFacts.luckyTime
+        )
+      : undefined;
 
   const heroSummary: HeroSummaryViewModel = {
     message: styleReadyText.heroQuote,
     dateLabel: period === "lifetime" ? "인생 테마" : dateLabel,
     period,
     subtitle: period === "daily" ? styleReadyText.lifetimeTheme : undefined,
+    luckyLine,
   };
 
   const astrologyByPeriod = Object.fromEntries(
@@ -289,7 +298,7 @@ export function buildResultViewModel(
     astrology: {
       byPeriod: astrologyByPeriod,
       compatibility: calculation.astrology.compatibility,
-      sunSign: calculation.astrology.signKo,
+      sunSign: signKo,
       moonSign: estimated.moonSign,
       risingSign: estimated.risingSign,
       planets,
@@ -324,11 +333,19 @@ export function getViewModelSliceForPeriod(
 ): { heroSummary: ResultViewModel["heroSummary"]; domainCards: DomainCardViewModel[] } {
   const astro = viewModel.astrology.byPeriod[period];
   const dateLabel = period !== "lifetime" ? formatDateByTab(period, new Date()) : "인생 테마";
+  const sign = astro?.metadata.sign ?? viewModel.astrology.sunSign;
+  const rawSliceMessage = astro?.interpretedSummary ?? viewModel.styleReadyText.heroQuote;
+  const f = astro?.interpretationFacts;
+  const luckyLine =
+    f && typeof f.luckyColor === "string" && f.luckyColor.trim().length > 0
+      ? formatLuckyLine(f.luckyColor, f.luckyNumber, f.luckyTime)
+      : viewModel.heroSummary.luckyLine;
   const heroSummary: HeroSummaryViewModel = {
-    message: astro?.interpretedSummary ?? viewModel.styleReadyText.heroQuote,
+    message: stripLeadingZodiacFromMessage(sign, rawSliceMessage),
     dateLabel,
     period,
     subtitle: period === "daily" ? viewModel.styleReadyText.lifetimeTheme : undefined,
+    luckyLine,
   };
   const domainCards: DomainCardViewModel[] = [];
   if (astro?.domainCards) {

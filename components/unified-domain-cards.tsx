@@ -41,7 +41,6 @@ export function UnifiedDomainCards({ domains, className }: UnifiedDomainCardsPro
                     <ScoreStars value={d.score} max={5} />
                   </div>
                   <p className="mt-2 text-xs text-text-muted line-clamp-2">{d.summary}</p>
-                  <p className="mt-1 text-[11px] text-accent-teal/90">✦ {d.luck}</p>
                 </div>
                 <span className="text-text-muted">{open ? "−" : "+"}</span>
               </button>

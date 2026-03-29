@@ -57,6 +57,11 @@ export function AstrologyCard({ data }: AstrologyCardProps) {
               </div>
             ))}
           </div>
+          <p className="mt-3 text-xs leading-relaxed text-text-muted">
+            <span className="font-medium text-text-secondary">하우스</span>는 출생 시점의 지평선을 12구역으로 나눈
+            위치로, 그 행성이 어떤 생활 무대(자아·소통·관계 등)와 연결되는지 보여 주는 표현이에요. 여기 숫자는
+            앱에서 읽기 쉽게 붙인 참고용이며, 정확한 하우스는 전문 출생 차트가 필요합니다.
+          </p>
         </div>
       ) : (
         <p className="text-xs text-text-muted mb-6">
