@@ -16,6 +16,15 @@ function pickAstro(
   return viewModel.astrology.byPeriod[period]?.domainCards.find((c) => c.domain === domain);
 }
 
+function stripScoreToken(text: string): string {
+  // e.g. "추진력 상승 (3/5). ..." or "( 3 / 5 )" → remove the score token only.
+  return (text ?? "")
+    .replace(/\(\s*\d+\s*\/\s*5\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+\./g, ".")
+    .trim();
+}
+
 /**
  * 4 rows: 연애·관계, 커리어·일, 재물, 건강 — 별자리 점수 + 사주 텍스트 결합.
  * (행운 색·숫자·시간대는 상단 히어로 카드로 이동)
@@ -43,7 +52,8 @@ export function buildUnifiedDomains(
     const a = pickAstro(viewModel, period, row.astroDomain);
     const s = pickSaju(saju, row.sajuDomain);
     const score = a?.score ?? 3;
-    const astroDetail = a?.summary ?? a?.keyPoint ?? "별자리 기간 흐름을 반영했습니다.";
+    const astroDetailRaw = a?.summary ?? a?.keyPoint ?? "별자리 기간 흐름을 반영했습니다.";
+    const astroDetail = stripScoreToken(astroDetailRaw);
     const sajuDetail =
       s?.summary?.trim() ||
       viewModel.saju.interpretationFacts.elementBalanceNote ||

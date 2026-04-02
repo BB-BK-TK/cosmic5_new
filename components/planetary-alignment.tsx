@@ -23,9 +23,12 @@ export function PlanetaryAlignment({
         className
       )}
     >
-      <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-text-muted">
-        행성 배치
-      </p>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
+          행성 배치 (Big 3)
+        </p>
+        <p className="text-[11px] text-text-muted">자아 · 감정 · 첫인상</p>
+      </div>
       <div className="relative mx-auto aspect-[4/3] max-h-[200px] w-full max-w-[280px]">
         <svg viewBox="0 0 200 160" className="h-full w-full" aria-hidden>
           <defs>
@@ -67,23 +70,52 @@ export function PlanetaryAlignment({
           <circle cx="58" cy="95" r="3.5" fill="var(--accent-teal)" />
         </svg>
       </div>
-      <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px] text-text-secondary">
-        <div className="space-y-1">
-          <span className="text-accent-gold">☉</span>
-          <div className="truncate text-text-primary">{sunSign}</div>
-          <div className="text-[10px] leading-snug text-text-muted">기본 자아 · 방향</div>
-        </div>
-        <div className="space-y-1">
-          <span className="text-accent-purple">☽</span>
-          <div className="truncate text-text-primary">{moonSign || "—"}</div>
-          <div className="text-[10px] leading-snug text-text-muted">감정 · 속마음</div>
-        </div>
-        <div className="space-y-1">
-          <span className="text-accent-teal">↑</span>
-          <div className="truncate text-text-primary">{risingSign || "—"}</div>
-          <div className="text-[10px] leading-snug text-text-muted">첫인상 · 사회 이미지</div>
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <Big3Item
+          icon="☉"
+          iconClassName="text-accent-gold"
+          title="태양"
+          meaning="기본 자아 · 방향"
+          value={sunSign}
+        />
+        <Big3Item
+          icon="☽"
+          iconClassName="text-accent-purple"
+          title="달"
+          meaning="감정 · 속마음"
+          value={moonSign || "—"}
+        />
+        <Big3Item
+          icon="↑"
+          iconClassName="text-accent-teal"
+          title="상승"
+          meaning="첫인상 · 사회 이미지"
+          value={risingSign || "—"}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Big3Item(props: {
+  icon: string;
+  iconClassName: string;
+  title: string;
+  meaning: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-glass-border bg-secondary/20 px-3 py-3 text-left">
+      <div className="flex items-center gap-2">
+        <span className={cn("text-lg font-semibold leading-none", props.iconClassName)} aria-hidden>
+          {props.icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-text-primary">{props.title}</p>
+          <p className="text-[11px] leading-snug text-text-muted">{props.meaning}</p>
         </div>
       </div>
+      <p className="mt-2 truncate text-sm font-medium text-text-primary">{props.value}</p>
     </div>
   );
 }
