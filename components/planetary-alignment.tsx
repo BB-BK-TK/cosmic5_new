@@ -68,17 +68,20 @@ export function PlanetaryAlignment({
         </svg>
       </div>
       <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px] text-text-secondary">
-        <div>
+        <div className="space-y-1">
           <span className="text-accent-gold">☉</span>
           <div className="truncate text-text-primary">{sunSign}</div>
+          <div className="text-[10px] leading-snug text-text-muted">기본 자아 · 방향</div>
         </div>
-        <div>
+        <div className="space-y-1">
           <span className="text-accent-purple">☽</span>
           <div className="truncate text-text-primary">{moonSign || "—"}</div>
+          <div className="text-[10px] leading-snug text-text-muted">감정 · 속마음</div>
         </div>
-        <div>
+        <div className="space-y-1">
           <span className="text-accent-teal">↑</span>
           <div className="truncate text-text-primary">{risingSign || "—"}</div>
+          <div className="text-[10px] leading-snug text-text-muted">첫인상 · 사회 이미지</div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { GlassCard } from "./glass-card";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +28,6 @@ interface SajuCardProps {
 }
 
 export function SajuCard({ data }: SajuCardProps) {
-  const [learnOpen, setLearnOpen] = useState(false);
-
   const dayPillar = useMemo(() => data.pillars.find((p) => p.type === "일주"), [data.pillars]);
   const yearPillar = useMemo(() => data.pillars.find((p) => p.type === "년주"), [data.pillars]);
   const monthPillar = useMemo(() => data.pillars.find((p) => p.type === "월주"), [data.pillars]);
@@ -261,58 +259,6 @@ export function SajuCard({ data }: SajuCardProps) {
         )}
       </div>
 
-      {/* 7) Learn more (progressive disclosure) */}
-      <div className="mt-5">
-        <button
-          type="button"
-          onClick={() => setLearnOpen((v) => !v)}
-          className="flex w-full items-center justify-between rounded-2xl border border-glass-border bg-secondary/10 px-4 py-4 text-left transition-colors hover:border-glass-highlight"
-        >
-          <div>
-            <p className="text-sm font-semibold text-text-primary">용어·구조 더 알아보기</p>
-            <p className="mt-1 text-xs text-text-muted">필요할 때만 열어보세요 (핵심은 위 해석/가이드입니다)</p>
-          </div>
-          <span className="text-lg text-accent-purple">{learnOpen ? "−" : "+"}</span>
-        </button>
-        {learnOpen && (
-          <div className="mt-3 space-y-3">
-            <GlassCard className="p-5">
-              <h4 className="text-sm font-semibold text-text-primary">서양 점성술 Big 3</h4>
-              <div className="mt-3 space-y-2 text-sm text-text-secondary">
-                <p>
-                  <span className="text-accent-gold">태양</span> = 기본 자아와 방향
-                </p>
-                <p>
-                  <span className="text-accent-purple">달</span> = 감정과 속마음
-                </p>
-                <p>
-                  <span className="text-accent-teal">상승</span> = 첫인상과 사회적 이미지
-                </p>
-              </div>
-            </GlassCard>
-            <GlassCard className="p-5">
-              <h4 className="text-sm font-semibold text-text-primary">사주 四柱 (네 기둥)</h4>
-              <div className="mt-3 space-y-2 text-sm text-text-secondary">
-                <p>
-                  <span className="font-medium text-text-primary">년주</span> = 시작과 배경
-                </p>
-                <p>
-                  <span className="font-medium text-text-primary">월주</span> = 사회성과 성장
-                </p>
-                <p>
-                  <span className="font-medium text-text-primary">일주</span> = 본질적인 나 (핵심)
-                </p>
-                <p>
-                  <span className="font-medium text-text-primary">시주</span> = 미래와 가능성
-                </p>
-                <p className="pt-2 text-xs text-text-muted">
-                  동물(띠) 표시는 지지(十二支)의 상징이에요. 특히 <span className="text-text-secondary">년주</span>의 띠가 흔히 말하는 출생 띠입니다.
-                </p>
-              </div>
-            </GlassCard>
-          </div>
-        )}
-      </div>
     </GlassCard>
   );
 }
