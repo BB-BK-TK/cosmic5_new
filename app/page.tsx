@@ -14,8 +14,6 @@ import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
 import { AnalysisTabNav } from "@/components/analysis-tab-nav";
 import { UnifiedDomainCards } from "@/components/unified-domain-cards";
-import { LandingPage } from "@/components/landing/landing-page";
-import { ConversationalInputFlow } from "@/components/input/conversational-input-flow";
 import { DecisionSupportResult } from "@/components/result/decision-support-result";
 import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
 import { getStylePresets, ACTIVE_FORTUNE_PERIOD } from "@/lib/data";
@@ -33,7 +31,7 @@ import type { SynthesisOutput, AstrologyDetailRewriteOutput } from "@/types/ai-t
 import type { ReadingStyleKey } from "@/types/ai-types";
 
 export default function CosmicFivePage() {
-  const [view, setView] = useState<"landing" | "input" | "loading" | "result">("landing");
+  const [view, setView] = useState<"input" | "loading" | "result">("input");
   const [resultViewModel, setResultViewModel] = useState<ResultViewModel | null>(null);
   const [lastBirthInfo, setLastBirthInfo] = useState<BirthInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -321,23 +319,6 @@ export default function CosmicFivePage() {
           <p className="text-sm text-text-secondary">별과 오행이 읽어주는 오늘의 방향</p>
         </header>
 
-        {view === "landing" && (
-          <LandingPage
-            onPrimaryCta={() => setView("input")}
-            onSecondaryCta={() =>
-              handleSubmit({
-                name: "홍길동",
-                calendarType: "solar",
-                birthDate: "1995-03-15",
-                birthTime: "14:30",
-                birthPlace: "서울",
-                interests: [],
-                toneStyle: NO_STYLE_KEY,
-              })
-            }
-          />
-        )}
-
         {view === "input" && (
           <div className="space-y-4">
             {errorMessage && (
@@ -349,24 +330,7 @@ export default function CosmicFivePage() {
                 {errorMessage}
               </div>
             )}
-            <ConversationalInputFlow
-              onBack={() => setView("landing")}
-              onSubmit={handleSubmit}
-              isLoading={isSubmitting}
-            />
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setView("input")}
-                className="w-full text-center text-xs text-text-muted hover:text-text-secondary"
-              >
-                폼 입력으로 전환하기 (고급)
-              </button>
-            </div>
-            {/* keep existing form accessible for edge cases */}
-            <div className="hidden">
-              <BirthInfoForm onSubmit={handleSubmit} isLoading={isSubmitting} />
-            </div>
+            <BirthInfoForm onSubmit={handleSubmit} isLoading={isSubmitting} />
           </div>
         )}
 
