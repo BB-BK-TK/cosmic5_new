@@ -14,6 +14,9 @@ import { IntegratedInsightCard } from "@/components/integrated-insight-card";
 import { MicroActionCard } from "@/components/micro-action-card";
 import { AnalysisTabNav } from "@/components/analysis-tab-nav";
 import { UnifiedDomainCards } from "@/components/unified-domain-cards";
+import { LandingPage } from "@/components/landing/landing-page";
+import { ConversationalInputFlow } from "@/components/input/conversational-input-flow";
+import { DecisionSupportResult } from "@/components/result/decision-support-result";
 import { NO_STYLE_KEY, type StyleOption } from "@/components/style-selector";
 import { getStylePresets, ACTIVE_FORTUNE_PERIOD } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -30,7 +33,7 @@ import type { SynthesisOutput, AstrologyDetailRewriteOutput } from "@/types/ai-t
 import type { ReadingStyleKey } from "@/types/ai-types";
 
 export default function CosmicFivePage() {
-  const [view, setView] = useState<"input" | "loading" | "result">("input");
+  const [view, setView] = useState<"landing" | "input" | "loading" | "result">("landing");
   const [resultViewModel, setResultViewModel] = useState<ResultViewModel | null>(null);
   const [lastBirthInfo, setLastBirthInfo] = useState<BirthInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -306,19 +309,34 @@ export default function CosmicFivePage() {
             </button>
           )}
           <div className="mb-2 flex justify-center">
-            <div className="rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-3 shadow-[0_8px_40px_rgba(120,100,255,0.25),0_0_0_1px_rgba(255,255,255,0.06)_inset] backdrop-blur-md sm:px-7 sm:py-4">
-              <Image
-                src="/cosmic5-logo.png"
-                alt="Cosmic 5"
-                width={360}
-                height={108}
-                className="h-[4.5rem] w-auto max-w-[min(100%,340px)] object-contain object-center drop-shadow-[0_2px_12px_rgba(255,255,255,0.15)] sm:h-[5.25rem]"
-                priority
-              />
-            </div>
+            <Image
+              src="/cosmic5-logo.png"
+              alt="Cosmic 5"
+              width={320}
+              height={96}
+              className="h-20 w-auto max-w-[min(100%,360px)] object-contain object-center sm:h-24"
+              priority
+            />
           </div>
           <p className="text-sm text-text-secondary">별과 오행이 읽어주는 오늘의 방향</p>
         </header>
+
+        {view === "landing" && (
+          <LandingPage
+            onPrimaryCta={() => setView("input")}
+            onSecondaryCta={() =>
+              handleSubmit({
+                name: "홍길동",
+                calendarType: "solar",
+                birthDate: "1995-03-15",
+                birthTime: "14:30",
+                birthPlace: "서울",
+                interests: [],
+                toneStyle: NO_STYLE_KEY,
+              })
+            }
+          />
+        )}
 
         {view === "input" && (
           <div className="space-y-4">
@@ -331,7 +349,24 @@ export default function CosmicFivePage() {
                 {errorMessage}
               </div>
             )}
-            <BirthInfoForm onSubmit={handleSubmit} isLoading={isSubmitting} />
+            <ConversationalInputFlow
+              onBack={() => setView("landing")}
+              onSubmit={handleSubmit}
+              isLoading={isSubmitting}
+            />
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setView("input")}
+                className="w-full text-center text-xs text-text-muted hover:text-text-secondary"
+              >
+                폼 입력으로 전환하기 (고급)
+              </button>
+            </div>
+            {/* keep existing form accessible for edge cases */}
+            <div className="hidden">
+              <BirthInfoForm onSubmit={handleSubmit} isLoading={isSubmitting} />
+            </div>
           </div>
         )}
 
@@ -370,19 +405,13 @@ export default function CosmicFivePage() {
             {/* Tab: 통합 해석 */}
             {activeTab === 0 && (
               <section className="space-y-6">
-                <HeroSummary
-                  data={heroDisplay ?? slice.heroSummary}
-                  highlightSegment={energyHighlight}
-                  tags={resultViewModel.metadataTags}
-                />
-                {selectedStyle !== NO_STYLE_KEY && (
-                  <p className="text-center text-xs text-text-muted">
-                    표현 스타일: {getStylePresets().find((p) => p.value === selectedStyle)?.label ?? selectedStyle}
-                  </p>
-                )}
-                <IntegratedInsightCard
-                  criteria={decisionItems}
-                  data={
+                <DecisionSupportResult
+                  viewModel={{
+                    ...resultViewModel,
+                    heroSummary: heroDisplay ?? slice.heroSummary,
+                  }}
+                  period={period}
+                  integratedDisplay={
                     integratedDisplay ?? {
                       commonTheme: resultViewModel.styleReadyText.integratedTheme,
                       cautionSignal: resultViewModel.styleReadyText.cautionSignal,
@@ -390,10 +419,28 @@ export default function CosmicFivePage() {
                       lifetimeTheme: resultViewModel.styleReadyText.lifetimeTheme,
                     }
                   }
+                  decisionItems={decisionItems}
+                  unifiedDomains={unifiedDomains}
+                  onSaveToday={() => {
+                    // v1: noop (future: persist a "daily log" row)
+                  }}
+                  onSeeTomorrow={() => {
+                    // v1: simple regenerate (future: allow tomorrow preview)
+                    handleRegenerate();
+                  }}
+                  onShare={() => {
+                    try {
+                      void navigator.clipboard.writeText(window.location.href);
+                    } catch {
+                      // ignore
+                    }
+                  }}
                 />
-                <UnifiedDomainCards domains={unifiedDomains} />
-                <WhyThisResult basedOn={resultViewModel.whyThisResult.basedOn} sections={resultViewModel.whyThisResult.sections} />
-                <MicroActionCard actions={resultViewModel.microActions} />
+                {selectedStyle !== NO_STYLE_KEY && (
+                  <p className="text-center text-xs text-text-muted">
+                    표현 스타일: {getStylePresets().find((p) => p.value === selectedStyle)?.label ?? selectedStyle}
+                  </p>
+                )}
               </section>
             )}
 
