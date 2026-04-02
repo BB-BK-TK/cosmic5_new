@@ -70,6 +70,16 @@ function normalizeBirthDateInput(raw: string) {
   // Accept: YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
 
+  // Accept: YYYY/MM/DD
+  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(trimmed)) {
+    const [yStr, mStr, dStr] = trimmed.split("/");
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const d = Number(dStr);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+    return `${y}-${toTwoDigits(m)}-${toTwoDigits(d)}`;
+  }
+
   // Accept: YYYYMMDD
   if (/^\d{8}$/.test(trimmed)) {
     return `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`;
@@ -99,8 +109,9 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
     toneStyle: NO_STYLE_KEY,
   });
 
-  const [birthDateMode, setBirthDateMode] = useState<"picker" | "manual">("picker");
-  const [manualBirthDate, setManualBirthDate] = useState(DEFAULT_BIRTH_DATE);
+  // Use manual text input by default to avoid locale-dependent date UI (e.g. MM/DD/YYYY).
+  const [birthDateMode, setBirthDateMode] = useState<"picker" | "manual">("manual");
+  const [manualBirthDate, setManualBirthDate] = useState(DEFAULT_BIRTH_DATE.replaceAll("-", "/"));
   const [birthDateError, setBirthDateError] = useState<string | null>(null);
 
   const todayIso = useMemo(() => {
@@ -201,7 +212,7 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                     type="text"
                     inputMode="numeric"
                     autoComplete="bday"
-                    placeholder="예: 1990-01-01 또는 19900101"
+                    placeholder="YYYY/MM/DD"
                     value={manualBirthDate}
                     onChange={(e) => {
                       const nextRaw = e.target.value;
@@ -224,11 +235,11 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                     onBlur={() => {
                       const normalized = normalizeBirthDateInput(manualBirthDate);
                       if (!normalized) {
-                        setBirthDateError("생년월일을 입력해 주세요. (YYYY-MM-DD)");
+                        setBirthDateError("생년월일을 입력해 주세요. (YYYY/MM/DD)");
                         return;
                       }
                       if (!isValidISODateString(normalized)) {
-                        setBirthDateError("올바른 날짜 형식이 아니에요. (YYYY-MM-DD)");
+                        setBirthDateError("올바른 날짜 형식이 아니에요. (YYYY/MM/DD)");
                         return;
                       }
                       if (normalized > todayIso) {
@@ -261,16 +272,15 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
               )}
 
               <div className="flex items-center justify-between">
-                <p className="text-xs text-text-muted">
-                  빠르게 선택하려면 기본값(1990-01-01)에서 수정해 주세요.
-                </p>
                 <button
                   type="button"
                   onClick={() => {
                     setBirthDateError(null);
                     setBirthDateMode((prev) => {
                       const next = prev === "picker" ? "manual" : "picker";
-                      if (next === "manual") setManualBirthDate(formData.birthDate || DEFAULT_BIRTH_DATE);
+                      if (next === "manual") {
+                        setManualBirthDate((formData.birthDate || DEFAULT_BIRTH_DATE).replaceAll("-", "/"));
+                      }
                       return next;
                     });
                   }}
@@ -306,9 +316,6 @@ export function BirthInfoForm({ onSubmit, isLoading }: BirthInfoFormProps) {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-text-muted mt-2">
-                사주앱 방식(자/축/…/해시)으로 선택하면 해당 구간의 대표 시간으로 계산돼요.
-              </p>
             </div>
           </div>
 
